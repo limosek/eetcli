@@ -2,5 +2,8 @@
     "require": {
         "dealnews/console": "^0.2.0",
         "ondrejnov/eet": "^0.2.0"
+    },
+    "require-dev": {
+        "kherge/box": "~2.0"
     }
 }

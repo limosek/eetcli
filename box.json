@@ -1,0 +1,33 @@
+{
+    "chmod": "0755",
+    "directories": [
+        "keys"
+    ],
+    "files": [
+        "README.md"
+    ],
+    "finder": [
+        {
+            "name": "*.php",
+            "exclude": ["symphony", "kherge", "tests", "doctrine"],
+            "in": "vendor"
+        },
+        {
+            "name": "*.wsdl",
+            "in": "vendor"
+        },
+        {
+            "name": "*.xsd",
+            "in": "vendor"
+        },
+        {
+            "name": "*.ini",
+            "exclude": "vendor",
+            "in": "."
+        }
+    ],
+    "git-version": "package_version",
+    "main": "eetcli.php",
+    "output": "eetcli.phar",
+    "stub": true
+}

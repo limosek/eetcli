@@ -1,19 +1,28 @@
 
 ifeq ($(P12),)
-  P12=test/EET_CA1_Playground-CZ1212121218.p12
+  P12=keys/EET_CA1_Playground-CZ1212121218.p12
 endif
 ifeq ($(PASS),)
   PASS=eet
 endif
 ifeq ($(CRT),)
-  CRT=test/EET_CA1_Playground-CZ1212121218.crt
+  CRT=keys/EET_CA1_Playground-CZ1212121218.crt
 endif
 ifeq ($(KEY),)
-  KEY=test/EET_CA1_Playground-CZ1212121218.pem
+  KEY=keys/EET_CA1_Playground-CZ1212121218.pem
+endif
+ifeq ($(COMPOSER),)
+  COMPOSER=composer
 endif
 
-all: key crt
+all: prepare key crt phar
 clean: key-clean crt-clean
+
+prepare: vendor/ondrejnov/eet/README.md
+vendor/ondrejnov/eet/README.md:
+	$(COMPOSER) update
+	# Workaround - one file is missing in library
+	cd vendor/ondrejnov/eet/Schema && wget -c https://raw.githubusercontent.com/ondrejnov/eet/master/src/Schema/ProductionService.wsdl
 
 key: $(KEY)
 $(KEY):
@@ -31,4 +40,5 @@ crt-clean:
 
 phar:
 	rm -f eetcli.phar
-	php -dphar.readonly=0 buildphar.php
+	php -dphar.readonly=0 vendor/bin/box build
+
