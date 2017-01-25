@@ -218,13 +218,13 @@ function file_from_phar($src) {
 
 $console->run();
 if (getenv("EETCLI_INI")) {
-    if (file_get_contents(getenv("EETCLI_INI"))) {
+    if (file_exists(getenv("EETCLI_INI"))) {
         read_config(getenv("EETCLI_INI"));
     } else {
         error(ERR_FILE,"Cannot open ".getenv("EETCLI_INI")." (from env EETCLI_INI)");
     }
 } else {
-    if (file_get_contents("eetcli.ini")) {
+    if (file_exists("eetcli.ini")) {
         read_config("eetcli.ini");
     }
 }

@@ -11,16 +11,13 @@ endif
 ifeq ($(KEY),)
   KEY=keys/EET_CA1_Playground-CZ1212121218.pem
 endif
-ifeq ($(COMPOSER),)
-  COMPOSER=composer
-endif
 
 all: prepare key crt phar
 clean: key-clean crt-clean
 
 prepare: vendor/ondrejnov/eet/README.md
 vendor/ondrejnov/eet/README.md:
-	$(COMPOSER) update
+	composer update
 	# Workaround - one file is missing in library
 	cd vendor/ondrejnov/eet/Schema && wget -c https://raw.githubusercontent.com/ondrejnov/eet/master/src/Schema/ProductionService.wsdl
 
