@@ -1,0 +1,188 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "hash": "2023a993cc8de88e64ffc3df63a61550",
+    "content-hash": "a0176c477abf105087fe822606db72e7",
+    "packages": [
+        {
+            "name": "dealnews/console",
+            "version": "0.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dealnews/Console.git",
+                "reference": "2dc58b0809aa9996b03e1752a2d623a6a393c163"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/dealnews/Console/zipball/2dc58b0809aa9996b03e1752a2d623a6a393c163",
+                "reference": "2dc58b0809aa9996b03e1752a2d623a6a393c163",
+                "shasum": ""
+            },
+            "require": {
+                "ext-date": "*",
+                "php": ">=5.5.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "DealNews\\Console\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD"
+            ],
+            "authors": [
+                {
+                    "name": "Brian Moon",
+                    "email": "brianm@dealnews.com",
+                    "homepage": "http://dealnews.com/",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Utilities for creating console applications",
+            "homepage": "https://github.com/dealnews/Console",
+            "keywords": [
+                "getopt",
+                "pid",
+                "status"
+            ],
+            "time": "2016-08-26 20:51:21"
+        },
+        {
+            "name": "ondrejnov/eet",
+            "version": "v0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ondrejnov/eet.git",
+                "reference": "da44f26fc295609528d79c8a3a51ec551aef1159"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ondrejnov/eet/zipball/da44f26fc295609528d79c8a3a51ec551aef1159",
+                "reference": "da44f26fc295609528d79c8a3a51ec551aef1159",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "php": ">=5.6.0",
+                "robrichards/wse-php": "2.0.*",
+                "robrichards/xmlseclibs": "2.0.*"
+            },
+            "require-dev": {
+                "nette/tester": "~1.4"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT",
+                "BSD-3-Clause",
+                "GPL-2.0",
+                "GPL-3.0"
+            ],
+            "description": "EET (Electronic records of sales for Czech Ministry of Finance) Client for PHP",
+            "time": "2016-10-30 14:16:59"
+        },
+        {
+            "name": "robrichards/wse-php",
+            "version": "2.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/robrichards/wse-php.git",
+                "reference": "45e8efd82ac0a873735b2158e44917d699db6740"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/robrichards/wse-php/zipball/45e8efd82ac0a873735b2158e44917d699db6740",
+                "reference": "45e8efd82ac0a873735b2158e44917d699db6740",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">= 5.3",
+                "robrichards/xmlseclibs": "^2.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "RobRichards\\WsePhp\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Rob Richards",
+                    "homepage": "http://www.cdatazone.org/",
+                    "role": "Main developer"
+                }
+            ],
+            "description": "Libraries for adding WS-* support to ext/soap in PHP.",
+            "homepage": "https://github.com/robrichards/wse-php",
+            "keywords": [
+                "WS-Security",
+                "soap",
+                "ws-addressing"
+            ],
+            "time": "2016-10-21 21:28:31"
+        },
+        {
+            "name": "robrichards/xmlseclibs",
+            "version": "2.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/robrichards/xmlseclibs.git",
+                "reference": "53bb1e9cae490a8f93af41bd9df6ea897161ca05"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/robrichards/xmlseclibs/zipball/53bb1e9cae490a8f93af41bd9df6ea897161ca05",
+                "reference": "53bb1e9cae490a8f93af41bd9df6ea897161ca05",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">= 5.3"
+            },
+            "suggest": {
+                "ext/mcrypt": "MCrypt extension",
+                "ext/openssl": "OpenSSL extension"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "RobRichards\\XMLSecLibs\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "A PHP library for XML Security",
+            "homepage": "https://github.com/robrichards/xmlseclibs",
+            "keywords": [
+                "security",
+                "signature",
+                "xml",
+                "xmldsig"
+            ],
+            "time": "2016-09-08 13:15:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": []
+}
