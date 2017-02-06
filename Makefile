@@ -1,15 +1,17 @@
 
 ifeq ($(P12),)
   P12=keys/EET_CA1_Playground-CZ1212121218.p12
+  PASS=eet
+else
  ifeq ($(CRT),)
-  CRT=$(shell basename $(P12) .p12).crt
+  CRT=$(shell dirname $(P12))/$(shell basename $(P12) .p12).crt
  endif
  ifeq ($(KEY),)
-  KEY=$(shell basename $(P12) .p12).pem
+  KEY=$(shell dirname $(P12))/$(shell basename $(P12) .p12).pem
  endif
 endif
-ifeq ($(PASS),)
-  PASS=eet
+ifneq ($(PASS),)
+  PASSOPT = -passin "pass:$(PASS)"
 endif
 ifeq ($(CRT),)
   CRT=keys/EET_CA1_Playground-CZ1212121218.crt
@@ -20,26 +22,32 @@ endif
 
 all: prepare key crt phar
 clean: key-clean crt-clean phar-clean
-	
+
+pem: 	key-info key crt
+key-info:
+	@echo "p12: $(P12)"
+	@echo "key: $(KEY)"
+	@echo "crt: $(CRT)"
+
 dist-clean: clean
 	rm -rf vendor 
 
 prepare: vendor/ondrejnov/eet/README.md
 vendor/ondrejnov/eet/README.md:
 	composer update
-	# Workaround - one file is missing in library
-	cd vendor/ondrejnov/eet/src/Schema && wget -c https://raw.githubusercontent.com/ondrejnov/eet/master/src/Schema/ProductionService.wsdl
 
-key: $(KEY)
+key: 	$(KEY)
 $(KEY):
-	@openssl pkcs12 -in "$(P12)" -out "$(KEY)" -nocerts -nodes -passin "pass:$(PASS)"
+	@echo "Creating $(KEY) from $(P12)"
+	@openssl pkcs12 -in "$(P12)" -out "$(KEY)" -nocerts -nodes $(PASSOPT) || rm -f $(KEY)
 
 key-clean:
 	@rm -f "$(KEY)"
 
 crt: $(CRT)
 $(CRT):
-	@openssl pkcs12 -in "$(P12)" -out "$(CRT)" -nokeys -nodes -passin "pass:$(PASS)"
+	@echo "Creating $(CRT) from $(P12)"
+	@openssl pkcs12 -in "$(P12)" -out "$(CRT)" -chain -nokeys -nodes $(PASSOPT) || rm -f $(CRT)
 	
 crt-clean:
 	@rm -f "$(CRT)"
@@ -54,4 +62,3 @@ eetcli.phar:
 info: eetcli.phar
 	phar list -f eetcli.phar -i '\.(ini|p12|pem|crt|dist)$$'
 
-a:

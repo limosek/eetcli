@@ -5,7 +5,6 @@ overovaci=1
 [cert]
 crt=./keys/EET_CA1_Playground-CZ1212121218.crt
 key=./keys/EET_CA1_Playground-CZ1212121218.pem
-;secret=1234
 
 [firma]
 dic=CZ1212121218

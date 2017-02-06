@@ -23,19 +23,16 @@ Malý návod k použití je i součástí samotného příkazu.
 ./eetcli.phar -h
 This is commandline interface for Czech EET (etrzby.cz)
 USAGE:
-  eetcli.phar  -h [--cas dat_trzby] [--crt crt] [--dic dic] [--key key] [--keysecret secret] [-n] [--output soubor] [--p12 p12] [--pc porad_cis] [--pokladna id_pokl] [--provozovna id_provoz] [-q] [--timeout mS] [--trzba celk_trzba] [--uuid uuid] [-v]
+  eetcli.phar  -h [--cas dat_trzby] [--crt crt] [--dic dic] [--key key] [-n] [--output soubor] [--pc porad_cis] [--pokladna id_pokl] [--provozovna id_provoz] [-q] [--timeout mS] [--trzba celk_trzba] [--uuid uuid] [-v]
 
 OPTIONS:
-  --cas         dat_trzby   Datum a cas trzby
+  --cas         dat_trzby   Datum a cas trzby 
   --crt         crt         Certificate public key (pem format)
   --dic         dic         DIC
    -h                       Shows this help
   --key         key         Certificate private key (pem format)
-  --keysecret   secret      Private key password (can be set by env
-                            EET_KEYSECRET too)
    -n                       Overovaci rezim
   --output      soubor      Zapsat fik do souboru 
-  --p12         p12         Certificate in PKCS12 format
   --pc          porad_cis   Poradove cislo
   --pokladna    id_pokl     ID pokladny
   --provozovna  id_provoz   ID provozovny
@@ -51,7 +48,8 @@ Copyright Lukas Macura  2017-2017
 
 ## Konfigurace
 Všechny parametry mohou být zadány přímo přes příkazovou řádku, nicméně pokud si vytvoříte ini soubor, můžete některé věci přednastavit.
-Můžete vyjít z eetcli.ini.dist. Zkopírujte ho do složky eetcli a upravte pro Vaše poižití.
+Můžete vyjít z eetcli.ini.dist. Zkopírujte ho do složky eetcli a upravte pro Vaše použití. Nezapomeňte, že dokud nenakonfigurujete své údaje,
+klient funguje v ověřovacím režimu s testovacími certifikáty!
 ```
 [global]
 ;verbose=1
@@ -60,7 +58,6 @@ overovaci=1
 [cert]
 crt=./keys/EET_CA1_Playground-CZ1212121218.crt
 key=./keys/EET_CA1_Playground-CZ1212121218.pem
-;secret=1234
 
 [firma]
 dic=CZ1212121218
@@ -69,13 +66,13 @@ provozovna=181
 ```
 
 ## Příklady
-Odešli tržbu 500,-Kč v ověřovacím režimu, použij klíč abcd.p12 s heslem bcdef. Použij pořadové číslo 1, pokladnu 1 a provozovnu 11.
+Odešli tržbu 500,-Kč v ověřovacím režimu, použij klíč abcd.pem a certifikat abcd.crt. Použij pořadové číslo 1, pokladnu 1 a provozovnu 11.
 ```
-eetcli.phar --p12 abcd.p12 --pc 1 --pokladna 1 --provozovna 11 --trzba 500 -n
+eetcli.phar --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500 -n
 ```
 nebo v ostrém režimu
 ```
-eetcli.phar --p12 abcd.p12 --pc 1 --pokladna 1 --provozovna 11 --trzba 500
+eetcli.phar --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500
 ```
 
 # Instalace
@@ -93,6 +90,13 @@ chmod +x eetcli.phar
 ```
 Pokud chcete, můžete klienta přidat i do spustitelné cesty, takže bude zavolatelný z jakéhokoliv místa. 
 
+Certifikáty pro EET jsou distribuovány jako .p12 soubory. Tento klient vyžaduje .pem a .crt soubory, které je potřeba extrahovar z .p12.
+Pokud máte nainstalovaný program make a openssl, můžete si certifikát převést takto:
+```
+make pem P12=keys/muj_klic.p12 PASS=heslo_ke_klici 
+```
+V adresáři keys pak vzniknou nové soubory .pem a .crt, které můžete použít a odkázat se na ně například z ini souboru.
+
 # Vývoj a kustomizace phar
 
 Pokud chcete pomoci s vývojem, určitě neodmítnu :) 
@@ -106,7 +110,7 @@ make clean
 make
 ```
 
-Pokud chcete změnit parametry pharu, můžete použít 
+Pokud chcete změnit parametry pharu, můžete použít například:
 ```
 make P12=cesta_ke_klici.p12 PASS=heslo_ke_klici 
 ```

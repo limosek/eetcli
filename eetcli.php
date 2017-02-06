@@ -1,28 +1,29 @@
+#!/usr/bin/env php
 <?php
 
-ini_set('display_errors', 0);
-ini_set("soap.wsdl_cache_enabled", 0);
-error_reporting(0);
 require_once(__DIR__ . "/vendor/autoload.php");
-if (getenv("EETCLI_TMP")) {
-    define("TMP_DIR",__DIR__);
+if (getenv("TMP")) {
+    define("TMP_DIR", "/tmp/");
 } else {
-    define("TMP_DIR",getenv("EETCLI_TMP"));
+    define("TMP_DIR", getenv("TMP"));
 }
 
-define("ERR_PARAMS",1);
-define("ERR_FILE",2);
-define("ERR_COM",3);
+define("ERR_PARAMS", 1);
+define("ERR_FILE", 2);
+define("ERR_COM", 3);
 
 use Ondrejnov\EET\Dispatcher;
 use Ondrejnov\EET\FileCertificate;
 use Ondrejnov\EET\Receipt;
 use Ondrejnov\EET\Utils\UUID;
+use Ondrejnov\EET\Exceptions\ServerException;
+use Ondrejnov\EET\Exceptions\ClientException;
 use DealNews\Console\Console;
 
-function exception_error_handler($errno, $errstr, $errfile, $errline ) {
+function exception_error_handler($errno, $errstr, $errfile, $errline) {
     error($errno, $errstr);
 }
+
 set_error_handler("exception_error_handler");
 
 $console = new Console(
@@ -45,16 +46,16 @@ $console = new Console(
         "param" => "crt",
         "optional" => Console::OPTIONAL
     ),
-    "p12" => array(
-        "description" => "Certificate in PKCS12 format",
-        "param" => "p12",
-        "optional" => Console::OPTIONAL
-    ),
-    "keysecret" => array(
-        "description" => "Private key password (can be set by env EET_KEYSECRET too)",
-        "param" => "secret",
-        "optional" => Console::OPTIONAL
-    ),
+    /*    "p12" => array(
+      "description" => "Certificate in PKCS12 format",
+      "param" => "p12",
+      "optional" => Console::OPTIONAL
+      ), */
+    /*    "keysecret" => array(
+      "description" => "Private key password (can be set by env EET_KEYSECRET too)",
+      "param" => "secret",
+      "optional" => Console::OPTIONAL
+      ), */
     "n" => array(
         "description" => "Overovaci rezim",
         "optional" => Console::OPTIONAL
@@ -92,7 +93,7 @@ $console = new Console(
     "trzba" => array(
         "description" => "Celkova trzba v Kc",
         "param" => "celk_trzba",
-        "optional" => Console::OPTIONAL
+        "optional" => Console::REQUIRED
     ),
     "timeout" => array(
         "description" => "Timeout v milisekundach",
@@ -104,19 +105,19 @@ $console = new Console(
         "param" => "soubor",
         "optional" => Console::OPTIONAL
     )
-   )
+        )
 );
 
-function error($code,$msg) {
-    fwrite(STDERR,"Error $code: $msg\n");
+function error($code, $msg) {
+    fwrite(STDERR, "Error $code: $msg\n");
     exit($code);
 }
 
-function setoptifempty($option,$value) {
+function setoptifempty($option, $value) {
     global $console;
-    
+
     if (!$console->$option) {
-        $console->$option=$value;
+        $console->$option = $value;
     }
 }
 
@@ -145,7 +146,7 @@ function read_config($file) {
             }
             if (array_key_exists("p12", $opts["cert"])) {
                 //$console->p12=$opts["cert"]["p12"];
-                error(ERR_PARAMS, "P12 Not implemented yet.");
+                error(ERR_PARAMS, "P12 primo jeste neumim.. Konvertujte p12 na pem a crt.");
             }
             if (array_key_exists("secret", $opts["cert"])) {
                 //$console->keysecret=$opts["cert"]["secret"];
@@ -168,26 +169,15 @@ function read_config($file) {
 
 function check_options() {
     global $console;
-    
+
     if (!$console->dic) {
-        error(ERR_PARAMS,"DIC musi byt nastaveno!");
+        error(ERR_PARAMS, "DIC musi byt nastaveno!");
     }
     if (!$console->key) {
-        error(ERR_PARAMS,"Cesta ke klici musi byt nastavena!");
-    } else {
-        //if (!file_exists($console->key)) {
-        //    error(ERR_FILE,"Nemohu nacist soubor klice '" . $console->key . "' !");
-        //}
+        error(ERR_PARAMS, "Cesta ke klici musi byt nastavena!");
     }
     if (!$console->crt) {
-        error(ERR_PARAMS,"Cesta k certifikatu musi byt nastavena!");
-    } else {
-        //if (!file_exists($console->crt)) {
-        //    error(ERR_FILE,"Nemohu nacist soubor certifikatu '" . $console->crt . "' !");
-        //}
-    }
-    if (!$console->pc) {
-        error(ERR_PARAMS,"Poradove cislo musi byt nastaveno!");
+        error(ERR_PARAMS, "Cesta k certifikatu musi byt nastavena!");
     }
 }
 
@@ -195,19 +185,19 @@ function file_from_phar($src) {
     if (preg_match("/^phar\:/", $src)) {
         $f = fopen($src, "r");
         if (!$f) {
-            error(ERR_FILE,"Cannot find $src in phar!");
+            error(ERR_FILE, "Cannot find $src in phar!");
         }
         $data = file_get_contents($src);
         if (!$data) {
-            error(ERR_FILE,"Cannot read $src from phar!");
+            error(ERR_FILE, "Cannot read $src from phar!");
         }
         $tmpf = TMP_DIR . basename($src);
         $t = fopen($tmpf, "w");
         if (!$t) {
-            error(ERR_FILE,"Cannot write to $tmpf!");
+            error(ERR_FILE, "Cannot write to $tmpf!");
         }
-        if (fwrite($t, $data)!=strlen($data)) {
-            error(ERR_FILE,"Cannot write to $tmpf!");
+        if (fwrite($t, $data) != strlen($data)) {
+            error(ERR_FILE, "Cannot write to $tmpf!");
         }
         fclose($t);
         return($tmpf);
@@ -221,7 +211,7 @@ if (getenv("EETCLI_INI")) {
     if (file_exists(getenv("EETCLI_INI"))) {
         read_config(getenv("EETCLI_INI"));
     } else {
-        error(ERR_FILE,"Cannot open ".getenv("EETCLI_INI")." (from env EETCLI_INI)");
+        error(ERR_FILE, "Cannot open " . getenv("EETCLI_INI") . " (from env EETCLI_INI)");
     }
 } else {
     if (file_exists("eetcli.ini")) {
@@ -236,16 +226,26 @@ if ($console->n) {
 } else {
     define('WSDL', file_from_phar(__DIR__ . '/vendor/ondrejnov/eet/src/Schema/ProductionService.wsdl'));
 }
+if (Console::verbosity()>=Console::VERBOSITY_VERBOSE) {
+    fprintf(STDERR,"WSDL: ".WSDL."\n");
+    fprintf(STDERR,"Key: $console->key\n");
+    fprintf(STDERR,"Cert: $console->crt\n");
+    fprintf(STDERR,"DIC: '$console->dic'\n");
+}
 
-$dispatcher = new Dispatcher(WSDL, $console->key, $console->crt);
-
+try {
+    $dispatcher = new Dispatcher(WSDL, $console->key, $console->crt);
+} catch (Exception $e) {
+    error($e->getCode(),$e->getMessage());
+}
 $r = new Receipt();
 
-if ($console->timeout) {
+if (isset($console->timeout)) {
     $r->initSoapClient();
     $r->getSoapClient->setTimeout($console->timeout);
+    $r->getSoapClient->setConnectTimeout($console->timeout);
 }
-if ($console->uuid) {
+if (isset($console->uuid)) {
     $uuid = $console->uuid;
 } else {
     $uuid = UUID::v4();
@@ -253,28 +253,43 @@ if ($console->uuid) {
 $r->uuid_zpravy = $uuid;
 $r->dic_popl = $console->dic;
 $r->id_provoz = $console->provozovna;
-$r->id_pokl = $console->pokladna;
-if ($console->pc) {
-    $r->porad_cis = $console->pc;
+if (isset($console->pokladna)) {
+    $r->id_pokl = $console->pokladna;
+} else {
+    $r->id_pokl = 11;
 }
-if ($console->cas) {
+if (isset($console->pc)) {
+    $r->porad_cis = $console->pc;
+} else {
+    $r->porad_cis = 1;
+}
+if (isset($console->cas)) {
     $r->dat_trzby = new \DateTime($console->cas);
 } else {
     $r->dat_trzby = new \DateTime();
 }
 $r->celk_trzba = $console->trzba;
 
-$fik=$dispatcher->send($r);
+if (Console::verbosity()>=Console::VERBOSITY_INFO) {
+    fprintf(STDERR,"Request:\n".print_r($r,true));
+}
+
+try {
+    $fik = $dispatcher->send($r) . "\n";
+} catch (Exception $e) {
+    error($e->getCode(),$e->getMessage());
+}
 
 if ($console->output) {
-    $f=fopen($console->output,"w");
-    if (!$f) { 
-        error(ERR_FILE,"Nemuzu zapsat vystupni soubor ".$console->output);
+    $f = fopen($console->output, "w");
+    if (!$f) {
+        echo "$fik";
+        error(ERR_FILE, "Nemuzu zapsat vystupni soubor " . $console->output);
     }
-    fputs($f,$fik);
+    fputs($f, $fik);
     fclose($f);
 } else {
-    echo $dispatcher->send($r)."\n";
+    echo "$fik";
 }
 
 
