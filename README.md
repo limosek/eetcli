@@ -20,10 +20,10 @@ Použil jsem komponenty třetích stran, které jsou rovněž šířeny pod otev
 # Použití
 Malý návod k použití je i součástí samotného příkazu.
 ```
-./eetcli.phar -h
+./eetcli -h
 This is commandline interface for Czech EET (etrzby.cz)
 USAGE:
-  eetcli.phar  -h [--cas dat_trzby] [--crt crt] [--dic dic] [--key key] [-n] [--output soubor] [--pc porad_cis] [--pokladna id_pokl] [--provozovna id_provoz] [-q] [--timeout mS] [--trzba celk_trzba] [--uuid uuid] [-v]
+  eetcli  -h [--cas dat_trzby] [--crt crt] [--dic dic] [--key key] [-n] [--output soubor] [--pc porad_cis] [--pokladna id_pokl] [--provozovna id_provoz] [-q] [--timeout mS] [--trzba celk_trzba] [--uuid uuid] [-v]
 
 OPTIONS:
   --cas         dat_trzby   Datum a cas trzby 
@@ -68,25 +68,25 @@ provozovna=181
 ## Příklady
 Odešli tržbu 500,-Kč v ověřovacím režimu, použij klíč abcd.pem a certifikat abcd.crt. Použij pořadové číslo 1, pokladnu 1 a provozovnu 11.
 ```
-eetcli.phar --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500 -n
+eetcli --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500 -n
 ```
 nebo v ostrém režimu
 ```
-eetcli.phar --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500
+eetcli --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500
 ```
 
 # Instalace
 
-Teoreticky by mělo stačit stáhnout PHP a pak spouštět přímo eetcli.phar. Návod pro instalaci pro jednotlivé systémy nebudu psát, kdo chce tento SW používat, jistě si to najde:)
+Teoreticky by mělo stačit stáhnout PHP a pak spouštět přímo eetcli. Návod pro instalaci pro jednotlivé systémy nebudu psát, kdo chce tento SW používat, jistě si to najde:)
 Případně mi pošlete info a já můžu návod upravit.
 Instalace na debian a podobných systémech:
 
 ```
 sudo apt-get update
 sudo apt-get install php-cli
-wget https://raw.githubusercontent.com/limosek/eetcli/0.1/eetcli.phar
-chmod +x eetcli.phar
-./eetcli.phar
+wget https://raw.githubusercontent.com/limosek/eetcli/0.1/bin/eetcli
+chmod +x eetcli
+./eetcli
 ```
 Pokud chcete, můžete klienta přidat i do spustitelné cesty, takže bude zavolatelný z jakéhokoliv místa. 
 
@@ -101,7 +101,9 @@ V adresáři keys pak vzniknou nové soubory .pem a .crt, které můžete použ�
 
 Pokud chcete pomoci s vývojem, určitě neodmítnu :) 
 Teoreticky si můžete vytvořit svůj vlastní phar archív a uložit do něj své klíče i ini soubor.
-S tím jsou zase samozřejmě spojeny bezpečnostní věci, tedy že byste pak neměli phar archív nikdy dát z ruky, ale to už je mimo rámec tohoto dokumentu.
+Stačí na to pustit make a vytvoří se eetcli.phar který je modifikován pro
+vaše použití. *Součástí takového balíku jsou pak všechny klíče* z adresáře
+keys tak  *eetcli.ini*. S tím jsou zase samozřejmě spojeny bezpečnostní věci, tedy že byste pak neměli phar archív nikdy dát z ruky, ale to už je mimo rámec tohoto dokumentu.
 Pokud chcete vytvořit vývojové prostředí, potřebujete mít k dispozici php, phar, composer a make. Pro vytvoření phar archivu můžete použít:
 ```
 git clone git@github.com:limosek/eetcli.git
@@ -121,5 +123,8 @@ Pro vyčištění do původního stavu použijte
 make distclean
 ```
 
-
-
+Pro vytvoření čistého eetcli (v adresáři bin) pro účely další distribuce (bez klíčů a
+osobních informací), použijte 
+```
+make distphar
+```
