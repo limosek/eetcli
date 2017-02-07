@@ -64,4 +64,7 @@ info: eetcli.phar
 
 distphar: bin/eetcli.phar
 bin/eetcli.phar:
+	mkdir -p bin
 	php -dphar.readonly=0 vendor/bin/box build -c box-dist.json
+	mv bin/eetcli.phar bin/eetcli
+
