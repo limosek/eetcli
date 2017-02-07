@@ -65,4 +65,3 @@ info: eetcli.phar
 distphar: bin/eetcli.phar
 bin/eetcli.phar:
 	php -dphar.readonly=0 vendor/bin/box build -c box-dist.json
-
