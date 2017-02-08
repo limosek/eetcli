@@ -53,8 +53,12 @@ Pouzijte eetcli -h -d 4 pro vice informaci.
 
 ## Konfigurace
 Všechny parametry mohou být zadány přímo přes příkazovou řádku, nicméně pokud si vytvoříte ini soubor, můžete některé věci přednastavit.
-Můžete vyjít z eetcli.ini.dist. Zkopírujte ho do složky eetcli a upravte pro Vaše použití. Nezapomeňte, že dokud nenakonfigurujete své údaje,
-*klient funguje v ověřovacím režimu* s testovacími certifikáty!
+Můžete vyjít z eetcli.ini.dist. Nezapomeňte, že dokud nenakonfigurujete své údaje, *klient funguje v ověřovacím režimu* s testovacími certifikáty!
+INI soubor se načítá z těchto umístění v tomto pořadí:
+* z adresáře, kde je eetcli.php (dirname(eetcli.ini)/eetcli.ini)
+* z domácího adresáře uživatele  HOME/eetcli.ini, HOME/.eetclirc
+* z globálního config adresáře (/etc/eetcli.ini)
+* z distribučního phar archivu (eetcli.ini.dist)
 ```
 [global]
 ; Pro vyssi uroven ladicich informaci
