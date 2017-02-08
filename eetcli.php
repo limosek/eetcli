@@ -31,7 +31,7 @@ if (!getenv("TMP")) {
 if (getenv("EETCLI_DEBUG")) {
     $dbg = getenv("EETCLI_DEBUG");
 } else {
-    $dbg = false;
+    $dbg = 2;
 }
 
 Console::init($dbg);
@@ -47,8 +47,8 @@ Config::setUsage("eetcli [--options]\n"
         . "EETCLI_DEBUG - debug level (0-4)\n"
         . "\n");
 
-Config::addOpt(null, "key", Config::C_REQUIRED, "Certificate private key (pem format)", "./keys/EET_CA1_Playground-CZ1212121218.pem");
-Config::addOpt(null, "crt", Config::C_REQUIRED, "Certificate public key (pem format)", "./keys/EET_CA1_Playground-CZ1212121218.crt");
+Config::addOpt(null, "key", Config::C_REQUIRED, "Certificate private key (pem format)", __DIR__ . "/keys/EET_CA1_Playground-CZ1212121218.pem");
+Config::addOpt(null, "crt", Config::C_REQUIRED, "Certificate public key (pem format)", __DIR__ . "/keys/EET_CA1_Playground-CZ1212121218.crt");
 Config::addOpt("n", "overovaci", Config::C_OPTIONAL, "Overovaci rezim", 0);
 Config::addOpt("p", "neprodukcni", Config::C_OPTIONAL, "Neprodukcni rezim", 0);
 Config::addOpt(null, "uuid", Config::C_REQUIRED, "UUID");
@@ -73,6 +73,7 @@ if (!Config::getOpt("trzba")) {
 Util::getFromPhar(__DIR__ . '/vendor/ondrejnov/eet/src/Schema/EETXMLSchema.xsd');
 if (Config::getOpt("neprodukcni")) {
     define('WSDL', Util::getFromPhar(__DIR__ . '/vendor/ondrejnov/eet/src/Schema/PlaygroundService.wsdl'));
+    Console::warning("Neprodukční prostředí. Pro produkční zadejte -d 0.\n");
 } else {
     define('WSDL', Util::getFromPhar(__DIR__ . '/vendor/ondrejnov/eet/src/Schema/ProductionService.wsdl'));
 }
@@ -133,6 +134,7 @@ if (!Config::getOpt("overovaci")) {
 
 if (Config::getOpt("overovaci")) {
     $over = "(overovaci)";
+    Console::warning("Ověřovací režim. Pro produkční zadejte -n 0.\n");
 } else {
     $over = "";
 }

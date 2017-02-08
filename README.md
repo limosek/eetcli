@@ -92,11 +92,19 @@ provozovna=181
 ## Příklady
 Odešli tržbu 500,-Kč v ověřovacím režimu, použij klíč abcd.pem a certifikat abcd.crt. Použij pořadové číslo 1, pokladnu 1 a provozovnu 11.
 ```
-eetcli --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500 -n
+$ eetcli --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500 -n
+1
 ```
-nebo v ostrém režimu
+nebo v ostrém režimu ale v produkčním prostředí
 ```
-eetcli --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500
+eetcli --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500 -p
+Neprodukční prostředí. Pro produkční zadejte -d 0.
+0210c205-1f2f-40a9-be8a-9f7eb7953aa5-ff
+```
+nebo ostrý režim a ostré prostředí
+```
+eetcli --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500 -p 0 -n 0
+0210c205-1f2f-40a9-be8a-9f7eb7953aa5-xx
 ```
 
 # Instalace

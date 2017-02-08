@@ -41,7 +41,7 @@ class Config {
     public function init($contexts = false) {
         self::$opts = New \stdClass();
         self::$usage = "";
-        self::addOpt("d", "debug", Getopt::REQUIRED_ARGUMENT, "Debug level", Console::LOG_ERROR);
+        self::addOpt("d", "debug", Getopt::REQUIRED_ARGUMENT, "Debug level", Console::LOG_WARN);
         self::addOpt("e", "errors", Getopt::REQUIRED_ARGUMENT, "Errors to file", "php://stderr");
         self::addOpt("o", "output", Getopt::REQUIRED_ARGUMENT, "Output to file", "php://stdout");
         self::addOpt("h", "help", Getopt::OPTIONAL_ARGUMENT, "Help");
