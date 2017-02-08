@@ -1,7 +1,7 @@
 {
     "require": {
-        "dealnews/console": "^0.2.0",
-        "ondrejnov/eet": "^0.3.0"
+        "ondrejnov/eet": "^0.3.0",
+        "ulrichsg/getopt-php": "^2.3"
     },
     "require-dev": {
         "kherge/box": "~2.0"

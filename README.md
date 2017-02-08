@@ -23,16 +23,17 @@ Malý návod k použití je i součástí samotného příkazu.
 ./eetcli -h
 This is commandline interface for Czech EET (etrzby.cz)
 USAGE:
-  eetcli  -h [--cas dat_trzby] [--crt crt] [--dic dic] [--key key] [-n] [--output soubor] [--pc porad_cis] [--pokladna id_pokl] [--provozovna id_provoz] [-q] [--timeout mS] [--trzba celk_trzba] [--uuid uuid] [-v]
+  eetcli.php  -h | --trzba celk_trzba [--cas dat_trzby] [--crt crt] [--dic dic] [--key key] [-n] [--output soubor] [-p] [--pc porad_cis] [--pokladna id_pokl] [--provozovna id_provoz] [-q] [--timeout mS] [--uuid uuid] [-v]
 
 OPTIONS:
-  --cas         dat_trzby   Datum a cas trzby 
+  --cas         dat_trzby   Datum a cas trzby
   --crt         crt         Certificate public key (pem format)
   --dic         dic         DIC
    -h                       Shows this help
   --key         key         Certificate private key (pem format)
    -n                       Overovaci rezim
   --output      soubor      Zapsat fik do souboru 
+   -p                       Neprodukcni prostredi (playground)
   --pc          porad_cis   Poradove cislo
   --pokladna    id_pokl     ID pokladny
   --provozovna  id_provoz   ID provozovny
@@ -54,6 +55,7 @@ klient funguje v ověřovacím režimu s testovacími certifikáty!
 [global]
 ;verbose=1
 overovaci=1
+;neprodukcni=1
 
 [cert]
 crt=./keys/EET_CA1_Playground-CZ1212121218.crt
@@ -83,7 +85,7 @@ Instalace na debian a podobných systémech:
 
 ```
 sudo apt-get update
-sudo apt-get install php-cli
+sudo apt-get install php-cli php5-curl
 wget https://raw.githubusercontent.com/limosek/eetcli/0.1/bin/eetcli
 chmod +x eetcli
 ./eetcli

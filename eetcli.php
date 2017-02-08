@@ -1,188 +1,69 @@
 #!/usr/bin/env php
 <?php
 
+ini_set("date.timezone","Europe/Prague");
+
 require_once(__DIR__ . "/vendor/autoload.php");
-if (getenv("TMP")) {
-    define("TMP_DIR", "/tmp/");
-} else {
-    define("TMP_DIR", getenv("TMP"));
-}
+require_once(__DIR__ . "/inc/Console.class.php");
+require_once(__DIR__ . "/inc/Config.class.php");
 
-define("ERR_PARAMS", 1);
-define("ERR_FILE", 2);
-define("ERR_COM", 3);
+/*
+ * EETCli classes
+ */
+use Eetcli\Console;
+use Eetcli\Config;
 
+/*
+ * Vendor classes
+ */
 use Ondrejnov\EET\Dispatcher;
 use Ondrejnov\EET\FileCertificate;
 use Ondrejnov\EET\Receipt;
 use Ondrejnov\EET\Utils\UUID;
 use Ondrejnov\EET\Exceptions\ServerException;
 use Ondrejnov\EET\Exceptions\ClientException;
-use DealNews\Console\Console;
 
-function exception_error_handler($errno, $errstr, $errfile, $errline) {
-    error($errno, $errstr);
+Console::init(100);
+Config::init();
+Config::setUsage("eetcli [--options]\n"
+        ."Seznam dostupnych maker na vystupu:\n"
+        ."{FIK} - fik kod\n"        
+        ."{BKP} - bkp kod\n"
+        ."{PKP} - pkp kod\n"
+        ."\n");
+
+Config::addOpt(null, "key", Config::C_REQUIRED, "Certificate private key (pem format)", "./keys/EET_CA1_Playground-CZ1212121218.pem");
+Config::addOpt(null, "crt", Config::C_REQUIRED, "Certificate public key (pem format)", "./keys/EET_CA1_Playground-CZ1212121218.crt");
+Config::addOpt("n", "overovaci", Config::C_OPTIONAL, "Overovaci rezim",0);
+Config::addOpt("p", "neprodukcni", Config::C_OPTIONAL, "Neprodukcni rezim",0);
+Config::addOpt(null, "uuid", Config::C_REQUIRED, "UUID");
+Config::addOpt(null, "dic", Config::C_REQUIRED, "Certificate public key (pem format)");
+Config::addOpt(null, "provozovna", Config::C_REQUIRED, "ID provozovny", 1);
+Config::addOpt(null, "pokladna", Config::C_REQUIRED, "ID pokladny", 1);
+Config::addOpt(null, "pc", Config::C_REQUIRED, "Poradove cislo", 1);
+$dte = New \DateTime(false, New \DateTimeZone("Europe/Prague"));
+Config::addOpt(null, "cas", Config::C_REQUIRED, "Cas a datum (yyyy-mm-dd hh:mm::ss)", $dte->format(DateTime::RFC3339));
+Config::addOpt(null, "trzba", Config::C_REQUIRED, "Trzba v Kc");
+Config::addOpt(null, "format", Config::C_REQUIRED, "Vystupni format. Vychozi je {FIK}. Muze byt napr. {FIK},{BPK},{PKP}", "{FIK}\n");
+
+Config::read(Array("global","firma","cert"));
+
+if (!Config::getOpt("trzba")) {
+    Config::helpOpts();
+    Console::error(3,"Chybi udaj o trzbe.\n");
 }
 
-set_error_handler("exception_error_handler");
-
-$console = new Console(
-        array(
-    "copyright" => array(
-        "owner" => "Lukas Macura",
-        "year" => "2017-" . date("Y")
-    ),
-    "help" => array(
-        "header" => "This is commandline interface for Czech EET (etrzby.cz)"
-    )
-        ), array(
-    "key" => array(
-        "description" => "Certificate private key (pem format)",
-        "param" => "key",
-        "optional" => Console::OPTIONAL
-    ),
-    "crt" => array(
-        "description" => "Certificate public key (pem format)",
-        "param" => "crt",
-        "optional" => Console::OPTIONAL
-    ),
-    /*    "p12" => array(
-      "description" => "Certificate in PKCS12 format",
-      "param" => "p12",
-      "optional" => Console::OPTIONAL
-      ), */
-    /*    "keysecret" => array(
-      "description" => "Private key password (can be set by env EET_KEYSECRET too)",
-      "param" => "secret",
-      "optional" => Console::OPTIONAL
-      ), */
-    "n" => array(
-        "description" => "Overovaci rezim",
-        "optional" => Console::OPTIONAL
-    ),
-    "uuid" => array(
-        "description" => "UUID",
-        "param" => "uuid",
-        "optional" => Console::OPTIONAL
-    ),
-    "dic" => array(
-        "description" => "DIC",
-        "param" => "dic",
-        "optional" => Console::OPTIONAL
-    ),
-    "provozovna" => array(
-        "description" => "ID provozovny",
-        "param" => "id_provoz",
-        "optional" => Console::OPTIONAL
-    ),
-    "pokladna" => array(
-        "description" => "ID pokladny",
-        "param" => "id_pokl",
-        "optional" => Console::OPTIONAL
-    ),
-    "pc" => array(
-        "description" => "Poradove cislo",
-        "param" => "porad_cis",
-        "optional" => Console::OPTIONAL
-    ),
-    "cas" => array(
-        "description" => "Datum a cas trzby",
-        "param" => "dat_trzby",
-        "optional" => Console::OPTIONAL
-    ),
-    "trzba" => array(
-        "description" => "Celkova trzba v Kc",
-        "param" => "celk_trzba",
-        "optional" => Console::REQUIRED
-    ),
-    "timeout" => array(
-        "description" => "Timeout v milisekundach",
-        "param" => "mS",
-        "optional" => Console::OPTIONAL
-    ),
-    "output" => array(
-        "description" => "Zapsat fik do souboru ",
-        "param" => "soubor",
-        "optional" => Console::OPTIONAL
-    )
-        )
-);
-
-function error($code, $msg) {
-    fwrite(STDERR, "Error $code: $msg\n");
-    exit($code);
-}
-
-function setoptifempty($option, $value) {
-    global $console;
-
-    if (!$console->$option) {
-        $console->$option = $value;
-    }
-}
-
-function read_config($file) {
-    global $console;
-
-    $opts = parse_ini_file($file, true);
-    if (is_array($opts)) {
-        if (array_key_exists("global", $opts)) {
-            if (array_key_exists("overovaci", $opts["global"])) {
-                setoptifempty("n", $opts["global"]["overovaci"]);
-            }
-            if (array_key_exists("verbose", $opts["global"])) {
-                setoptifempty("v", $opts["global"]["verbose"]);
-            }
-            if (array_key_exists("timeout", $opts["global"])) {
-                setoptifempty("timeout", $opts["global"]["timeout"]);
-            }
-        }
-        if (array_key_exists("cert", $opts)) {
-            if (array_key_exists("crt", $opts["cert"])) {
-                setoptifempty("crt", $opts["cert"]["crt"]);
-            }
-            if (array_key_exists("key", $opts["cert"])) {
-                setoptifempty("key", $opts["cert"]["key"]);
-            }
-            if (array_key_exists("p12", $opts["cert"])) {
-                //$console->p12=$opts["cert"]["p12"];
-                error(ERR_PARAMS, "P12 primo jeste neumim.. Konvertujte p12 na pem a crt.");
-            }
-            if (array_key_exists("secret", $opts["cert"])) {
-                //$console->keysecret=$opts["cert"]["secret"];
-                error(ERR_PARAMS, "Passphrase not implemented yet.");
-            }
-        }
-        if (array_key_exists("firma", $opts)) {
-            if (array_key_exists("dic", $opts["firma"])) {
-                setoptifempty("dic", $opts["firma"]["dic"]);
-            }
-            if (array_key_exists("pokladna", $opts["firma"])) {
-                setoptifempty("pokladna", $opts["firma"]["pokladna"]);
-            }
-            if (array_key_exists("provozovna", $opts["firma"])) {
-                setoptifempty("provozovna", $opts["firma"]["provozovna"]);
-            }
-        }
-    }
-}
-
-function check_options() {
-    global $console;
-
-    if (!$console->dic) {
-        error(ERR_PARAMS, "DIC musi byt nastaveno!");
-    }
-    if (!$console->key) {
-        error(ERR_PARAMS, "Cesta ke klici musi byt nastavena!");
-    }
-    if (!$console->crt) {
-        error(ERR_PARAMS, "Cesta k certifikatu musi byt nastavena!");
+$tmpfiles=Array();
+function tmpclean() {
+    global $tmpfiles;
+    foreach ($tmpfiles as $f) {
+        unlink($f);
     }
 }
 
 function file_from_phar($src) {
-    if (preg_match("/^phar\:/", $src)) {
+    global $tmpfiles;
+    if (preg_match("/^aphar\:/", $src)) {
         $f = fopen($src, "r");
         if (!$f) {
             error(ERR_FILE, "Cannot find $src in phar!");
@@ -200,96 +81,84 @@ function file_from_phar($src) {
             error(ERR_FILE, "Cannot write to $tmpf!");
         }
         fclose($t);
+        $tmpfiles[] = $tmpf;
         return($tmpf);
     } else {
         return($src);
     }
 }
 
-$console->run();
-if (getenv("EETCLI_INI")) {
-    if (file_exists(getenv("EETCLI_INI"))) {
-        read_config(getenv("EETCLI_INI"));
-    } else {
-        error(ERR_FILE, "Cannot open " . getenv("EETCLI_INI") . " (from env EETCLI_INI)");
-    }
-} else {
-    if (file_exists("eetcli.ini")) {
-        read_config("eetcli.ini");
-    }
-}
-check_options();
-
 file_from_phar(__DIR__ . '/vendor/ondrejnov/eet/src/Schema/EETXMLSchema.xsd');
-if ($console->n) {
+if (Config::getOpt("neprodukcni")) {
     define('WSDL', file_from_phar(__DIR__ . '/vendor/ondrejnov/eet/src/Schema/PlaygroundService.wsdl'));
 } else {
     define('WSDL', file_from_phar(__DIR__ . '/vendor/ondrejnov/eet/src/Schema/ProductionService.wsdl'));
 }
-if (Console::verbosity()>=Console::VERBOSITY_VERBOSE) {
-    fprintf(STDERR,"WSDL: ".WSDL."\n");
-    fprintf(STDERR,"Key: $console->key\n");
-    fprintf(STDERR,"Cert: $console->crt\n");
-    fprintf(STDERR,"DIC: '$console->dic'\n");
-}
+
+Console::debug("WSDL: " . WSDL . "\n");
+Console::debug("Key: ".Config::getOpt("key")."\n");
+Console::debug("Cert: ".Config::getOpt("crt")."\n");
+Console::debug("DIC: ".Config::getOpt("dic")."\n");
 
 try {
-    $dispatcher = new Dispatcher(WSDL, $console->key, $console->crt);
+    $dispatcher = new Dispatcher(WSDL, Config::getOpt("key"), Config::getOpt("crt"));
 } catch (Exception $e) {
-    error($e->getCode(),$e->getMessage());
+    error($e->getCode(), $e->getMessage());
 }
 $r = new Receipt();
 
-if (isset($console->timeout)) {
-    $r->initSoapClient();
-    $r->getSoapClient->setTimeout($console->timeout);
-    $r->getSoapClient->setConnectTimeout($console->timeout);
-}
-if (isset($console->uuid)) {
-    $uuid = $console->uuid;
+if (Config::getOpt("uuid")) {
+    $uuid = Config::getOpt("uuid");
 } else {
     $uuid = UUID::v4();
 }
 $r->uuid_zpravy = $uuid;
-$r->dic_popl = $console->dic;
-$r->id_provoz = $console->provozovna;
-if (isset($console->pokladna)) {
-    $r->id_pokl = $console->pokladna;
+$r->dic_popl = Config::getOpt("dic");
+if (Config::getOpt("provozovna")) {
+    $r->id_provoz = Config::getOpt("provozovna");
 } else {
-    $r->id_pokl = 11;
+    $r->id_provoz = 1;
 }
-if (isset($console->pc)) {
-    $r->porad_cis = $console->pc;
+if (Config::getOpt("pokladna")) {
+    $r->id_pokl = Config::getOpt("pokladna");
+} else {
+    $r->id_pokl = 1;
+}
+if (Config::getOpt("pc")) {
+    $r->porad_cis = Config::getOpt("pc");
 } else {
     $r->porad_cis = 1;
 }
-if (isset($console->cas)) {
-    $r->dat_trzby = new \DateTime($console->cas);
-} else {
-    $r->dat_trzby = new \DateTime();
-}
-$r->celk_trzba = $console->trzba;
+$r->dat_trzby = New \DateTime(Config::getOpt("cas"));
+$r->celk_trzba = Config::getOpt("trzba");
 
-if (Console::verbosity()>=Console::VERBOSITY_INFO) {
-    fprintf(STDERR,"Request:\n".print_r($r,true));
+if (!Config::getOpt("overovaci")) {
+    $codes = $dispatcher->getCheckCodes($r);
+    $bkp=$codes['bkp'];
+    $pkp=$codes['pkp'];
+} else {
+    $bkp="";
+    $pkp="";
 }
+
+if (Config::getOpt("overovaci")) {
+    $over = "(overovaci)";
+} else {
+    $over = "";
+}
+Console::trace("Request $over:\n" . print_r($r, true));
 
 try {
-    $fik = $dispatcher->send($r) . "\n";
+    $fik = $dispatcher->send($r, Config::getOpt("overovaci"));
 } catch (Exception $e) {
-    error($e->getCode(),$e->getMessage());
+    Console::error($e->getCode(), $e->getMessage()."\n");
 }
 
-if ($console->output) {
-    $f = fopen($console->output, "w");
-    if (!$f) {
-        echo "$fik";
-        error(ERR_FILE, "Nemuzu zapsat vystupni soubor " . $console->output);
-    }
-    fputs($f, $fik);
-    fclose($f);
-} else {
-    echo "$fik";
-}
+$out = stripcslashes(preg_replace(
+        Array("{FIK}","{BKP}","{PKP}"),
+        Array($fik,$bkp["_"],bin2hex($pkp["_"])),
+        Config::getOpt("format")));
 
+Console::out($out);
 
+tmpclean();
