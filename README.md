@@ -108,7 +108,7 @@ Instalace na debian a podobných systémech:
 ```
 sudo apt-get update
 sudo apt-get install php-cli php5-curl
-wget https://raw.githubusercontent.com/limosek/eetcli/0.1/bin/eetcli
+wget https://raw.githubusercontent.com/limosek/eetcli/0.2/bin/eetcli
 chmod +x eetcli
 ./eetcli -h
 ```
