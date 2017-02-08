@@ -20,48 +20,66 @@ Použil jsem komponenty třetích stran, které jsou rovněž šířeny pod otev
 # Použití
 Malý návod k použití je i součástí samotného příkazu.
 ```
-./eetcli -h
-This is commandline interface for Czech EET (etrzby.cz)
-USAGE:
-  eetcli.php  -h | --trzba celk_trzba [--cas dat_trzby] [--crt crt] [--dic dic] [--key key] [-n] [--output soubor] [-p] [--pc porad_cis] [--pokladna id_pokl] [--provozovna id_provoz] [-q] [--timeout mS] [--uuid uuid] [-v]
+$ eetcli -h
 
-OPTIONS:
-  --cas         dat_trzby   Datum a cas trzby
-  --crt         crt         Certificate public key (pem format)
-  --dic         dic         DIC
-   -h                       Shows this help
-  --key         key         Certificate private key (pem format)
-   -n                       Overovaci rezim
-  --output      soubor      Zapsat fik do souboru 
-   -p                       Neprodukcni prostredi (playground)
-  --pc          porad_cis   Poradove cislo
-  --pokladna    id_pokl     ID pokladny
-  --provozovna  id_provoz   ID provozovny
-   -q                       Be quiet. Will override -v
-  --timeout     mS          Timeout v milisekundach
-  --trzba       celk_trzba  Celkova trzba v Kc
-  --uuid        uuid        UUID
-   -v                       Be verbose. Additional v will increase verbosity.
-                            e.g. -vvv
+Seznam dostupnych maker na vystupu v poli format:
+{FIK} - fik kod
+{BKP} - bkp kod
+{PKP} - pkp kod
 
-Copyright Lukas Macura  2017-2017
+Seznam promennych prostredi, ktere je mozno pouzit:
+TMP - adresar pro docasne soubory
+EETCLI_DEBUG - debug level (0-4)
+
+Options:
+  -d, --debug <arg>       
+  -e, --errors <arg>      
+  -o, --output <arg>      
+  -h, --help [<arg>]      
+  --key <arg>             
+  --crt <arg>             
+  -n, --overovaci [<arg>] 
+  -p, --neprodukcni [<arg>] 
+  --uuid <arg>            
+  --dic <arg>             
+  --provozovna <arg>      
+  --pokladna <arg>        
+  --pc <arg>              
+  --cas <arg>             
+  --trzba <arg>           
+  --format <arg>          
+Pouzijte eetcli -h -d 4 pro vice informaci.
 ```
 
 ## Konfigurace
 Všechny parametry mohou být zadány přímo přes příkazovou řádku, nicméně pokud si vytvoříte ini soubor, můžete některé věci přednastavit.
 Můžete vyjít z eetcli.ini.dist. Zkopírujte ho do složky eetcli a upravte pro Vaše použití. Nezapomeňte, že dokud nenakonfigurujete své údaje,
-klient funguje v ověřovacím režimu s testovacími certifikáty!
+*klient funguje v ověřovacím režimu* s testovacími certifikáty!
 ```
 [global]
-;verbose=1
+; Pro vyssi uroven ladicich informaci
+;debug=4
+
+; Kam zapsat vystup. Pokud neni nastaveno, pak stdout
+;output=fik.txt
+; Kam zapsat chyby. Pokud neni nastaveno, pak stderr
+;errors=eet.log
+
+[eet]
+; Vychozi stav v distribucnim balicku je overovaci. Odkomentujte pro ostry
 overovaci=1
-;neprodukcni=1
+; Vychozi stav v distribucnim balicku je neprodukcni prostredi. Odkomentujte pro ostry
+neprodukcni=1
+; Format, ve kterem se vypisi data. Je mozno pouzit \n,\r a jine znacky. Makra budou zamenena za kody. 
+;format=fik={FIK}\nbkp={BKP}\npkp={PKP}\n
 
 [cert]
+; Vychozi distribucni certifikaty. Zmente za svoje
 crt=./keys/EET_CA1_Playground-CZ1212121218.crt
 key=./keys/EET_CA1_Playground-CZ1212121218.pem
 
 [firma]
+; Vychozi informace pro testovaci certifikat. Zamente za vase data
 dic=CZ1212121218
 pokladna=1
 provozovna=181
@@ -88,13 +106,16 @@ sudo apt-get update
 sudo apt-get install php-cli php5-curl
 wget https://raw.githubusercontent.com/limosek/eetcli/0.1/bin/eetcli
 chmod +x eetcli
-./eetcli
+./eetcli -h
 ```
 Pokud chcete, můžete klienta přidat i do spustitelné cesty, takže bude zavolatelný z jakéhokoliv místa. 
 
 Certifikáty pro EET jsou distribuovány jako .p12 soubory. Tento klient vyžaduje .pem a .crt soubory, které je potřeba extrahovar z .p12.
-Pokud máte nainstalovaný program make a openssl, můžete si certifikát převést takto:
+Pokud máte nainstalovaný program make a openssl, můžete si certifikát převést takto (pouze pokud si stáhnete git repozitář):
 ```
+git clone https://github.com/limosek/eetcli.git
+cd eetcli
+# Zkopirujte svuj .p12 klic do adresare keys/ a nasledne
 make pem P12=keys/muj_klic.p12 PASS=heslo_ke_klici 
 ```
 V adresáři keys pak vzniknou nové soubory .pem a .crt, které můžete použít a odkázat se na ně například z ini souboru.

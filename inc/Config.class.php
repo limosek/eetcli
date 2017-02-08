@@ -1,9 +1,20 @@
 <?php
 
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (C) 2017 limo
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 namespace Eetcli;
@@ -60,7 +71,8 @@ class Config {
                 __DIR__ . "/../eetcli.ini",
                 getenv("HOME") . "/eetcli.ini",
                 getenv("HOME") . "/.eetclirc",
-                "/etc/eetcli.ini"
+                "/etc/eetcli.ini",
+                __DIR__ . "/../eetcli.ini.dist"
             );
             foreach ($cffiles as $file) {
                 if (file_exists($file)) {
@@ -70,7 +82,7 @@ class Config {
             }
         }
         if (!$ini) {
-            Console::error(self::E_PARMS, "Cannot read ini file! " . join(",", $cffiles) . "\n");
+            Console::error(self::E_PARMS, "Cannot read ini file! (tried " . join(", ", $cffiles) . ")\n");
         }
         foreach (self::$opts as $opt) {
             $key = $opt->option;
@@ -82,21 +94,23 @@ class Config {
                 if (array_key_exists($c, $ini)) {
                     if (array_key_exists($key, $ini[$c])) {
                         $value = $ini[$c][$key];
-                        Console::trace("Setting option $key from INI file to vale '$value'.\n");
+                        Console::trace("Setting option $key from INI file to value '$value'.\n");
                         self::$opts->$key->value = $value;
                     }
                     if (array_key_exists("$c.$key", $ini[$c])) {
                         $value = $ini[$c]["$c.$key"];
-                        Console::trace("Setting option $c.$opt->option from INI file to vale '$value'.\n");
+                        Console::trace("Setting option $c.$opt->option from INI file to value '$value'.\n");
                         self::$opts->$key->value = $value;
                     }
                 }
             }
         }
         foreach (self::$opts as $opt) {
-            $key = strtr(strtoupper($key = "EETCLI_$opt->option"), ".-", "__");
-            if (getenv($key)) {
-                Console::trace("Setting option $c.$opt->option from ENV variable $key to vale '$value'.\n");
+            $key=$opt->option;
+            $ekey = strtr(strtoupper("EETCLI_$key"), ".-", "__");
+            if (getenv($ekey)) {
+                $value=getenv($ekey);
+                Console::trace("Setting option $key from ENV variable $ekey to value '$value'.\n");
                 self::$opts->$key->value = $value;
             }
         }
@@ -106,8 +120,7 @@ class Config {
             self::$args = self::$getopt->getOperands();
             self::$getopt->setBanner(self::$usage);
         } catch (\Exception $e) {
-            print_r($e);
-            Console::error(Config::E_PARMS, "Bad parameters! Use -h!\n");
+            Console::error(Config::E_PARMS, $e->getMessage() . "\nUse eetcli -h!\n");
         }
         foreach (self::$opts as $opt) {
             $key = $opt->option;
@@ -125,6 +138,10 @@ class Config {
         }
         if (self::getOpt("output")) {
             Console::setOutFile(self::getOpt("output"));
+        }
+        if (self::getOpt("help")) {
+            self::helpOpts();
+            exit;
         }
     }
 
@@ -191,6 +208,7 @@ class Config {
 
     public function helpOptsShort($msg = "") {
         Console::log(self::$getopt->getHelpText());
+        Console::log("Pouzijte eetcli -h -d 4 pro vice informaci.\n");
     }
 
 }

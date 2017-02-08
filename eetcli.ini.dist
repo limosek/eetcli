@@ -1,13 +1,27 @@
 [global]
-;verbose=1
+; Pro vyssi uroven ladicich informaci
+;debug=4
+
+; Kam zapsat vystup. Pokud neni nastaveno, pak stdout
+;output=fik.txt
+; Kam zapsat chyby. Pokud neni nastaveno, pak stderr
+;errors=eet.log
+
+[eet]
+; Vychozi stav v distribucnim balicku je overovaci. Odkomentujte pro ostry
 overovaci=1
-;neprodukcni=1
+; Vychozi stav v distribucnim balicku je neprodukcni prostredi. Odkomentujte pro ostry
+neprodukcni=1
+; Format, ve kterem se vypisi data. Je mozno pouzit \n,\r a jine znacky. Makra budou zamenena za kody. 
+;format=fik={FIK}\nbkp={BKP}\npkp={PKP}\n
 
 [cert]
+; Vychozi distribucni certifikaty. Zmente za svoje
 crt=./keys/EET_CA1_Playground-CZ1212121218.crt
 key=./keys/EET_CA1_Playground-CZ1212121218.pem
 
 [firma]
+; Vychozi informace pro testovaci certifikat. Zamente za vase data
 dic=CZ1212121218
 pokladna=1
 provozovna=181
