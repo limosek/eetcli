@@ -1,3 +1,4 @@
 vendor/*
 *~
 /eetcli.phar
+/nbproject/private/

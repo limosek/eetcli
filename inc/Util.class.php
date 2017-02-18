@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2017 limo
+ * Copyright (C) 2017 Lukas Macura <lukas@macura.cz>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,10 @@
 
 namespace Eetcli;
 
+use Eetcli\Console;
+use Eetcli\Config;
+use Ondrejnov\EET\Dispatcher;
+
 /**
  * Description of Util
  *
@@ -30,9 +34,9 @@ class Util {
 
     public function init() {
         self::$tmpfiles = Array();
-        register_shutdown_function(function(){
+        register_shutdown_function(function() {
             Util::tmpClean();
-        } );
+        });
     }
 
     public function getFromPhar($file) {
@@ -69,4 +73,54 @@ class Util {
             unlink($f);
         }
     }
+    
+    public function initDispatcher($neprodukcni, $overovaci) {
+
+        Util::getFromPhar(__DIR__ . '/../vendor/ondrejnov/eet/src/Schema/EETXMLSchema.xsd');
+        if ($neprodukcni) {
+            define('WSDL', Util::getFromPhar(__DIR__ . '/../vendor/ondrejnov/eet/src/Schema/PlaygroundService.wsdl'));
+            Console::warning("Neprodukční prostředí. Pro produkční zadejte -d 0.\n");
+        } else {
+            define('WSDL', Util::getFromPhar(__DIR__ . '/../vendor/ondrejnov/eet/src/Schema/ProductionService.wsdl'));
+        }
+
+        if ($overovaci) {
+            Console::warning("Ověřovací režim. Pro ostry zadejte -n 0.\n");
+        }
+        Console::debug("WSDL: " . WSDL . "\n");
+        Console::debug("Key: " . Config::getOpt("key") . "\n");
+        Console::debug("Cert: " . Config::getOpt("crt") . "\n");
+        Console::debug("DIC: " . Config::getOpt("dic") . "\n");
+
+        try {
+            $dispatcher = new Dispatcher(WSDL, Config::getOpt("key"), Config::getOpt("crt"));
+        } catch (Exception $e) {
+            Console::error($e->getCode(), $e->getMessage());
+        }
+        return($dispatcher);
+    }
+
+    public function getCheckCodes($d, $r, $neprodukcni = false, $overovaci = false) {
+        if (!$overovaci) {
+            $codes = $d->getCheckCodes($r);
+            if (array_key_exists("_", $codes['bkp'])) {
+                $bkp = bin2hex($codes['bkp']['_']);
+            } else {
+                $bkp = null;
+            }
+            if (array_key_exists("_", $codes['pkp'])) {
+                $pkp = bin2hex($codes['pkp']['_']);
+            } else {
+                $pkp = null;
+            }
+        } else {
+            $bkp = null;
+            $pkp = null;
+        }
+        return(Array(
+            "bkp" => $bkp,
+            "pkp" => $pkp
+        ));
+    }
+
 }

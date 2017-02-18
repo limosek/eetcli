@@ -34,7 +34,7 @@ dist-clean: clean
 
 prepare: vendor/ondrejnov/eet/README.md
 vendor/ondrejnov/eet/README.md:
-	composer update
+	composer update --ignore-platform-reqs
 
 key: 	$(KEY)
 $(KEY):
