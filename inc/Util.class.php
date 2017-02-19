@@ -30,6 +30,15 @@ use Ondrejnov\EET\Dispatcher;
  */
 class Util {
 
+    const E_FILE = 20;
+    const E_ALREADYSENT = 21;
+    const E_PARAMS = 22;
+    const E_FORMAT = 23;
+    const E_LOCK = 24;
+    const E_NEW = 25;
+    const E_SENT = 26;
+    const E_CHECKCODES = 27;
+
     private static $tmpfiles;
 
     public function init() {
@@ -44,19 +53,19 @@ class Util {
         if (preg_match("/^phar\:/", $file)) {
             $f = fopen($file, "r");
             if (!$f) {
-                Console::error(10, "Cannot find $file in phar!\n");
+                Console::error(self::E_FILE, "Cannot find $file in phar!\n");
             }
             $data = file_get_contents($file);
             if (!$data) {
-                Console::error(10, "Cannot read $file from phar!\n");
+                Console::error(self::E_FILE, "Cannot read $file from phar!\n");
             }
             $tmpf = $tmp . "/" . basename($file);
             $t = fopen($tmpf, "w");
             if (!$t) {
-                Console::error(10, "Cannot write to $tmpf. Please set TMP dir!\n");
+                Console::error(self::E_FILE, "Cannot write to $tmpf. Please set TMP dir!\n");
             }
             if (fwrite($t, $data) != strlen($data)) {
-                Console::error(10, "Cannot write to $tmpf!\n");
+                Console::error(self::E_FILE, "Cannot write to $tmpf!\n");
             }
             fclose($t);
             self::$tmpfiles[] = $tmpf;
@@ -73,13 +82,13 @@ class Util {
             unlink($f);
         }
     }
-    
+
     public function initDispatcher($neprodukcni, $overovaci) {
 
         Util::getFromPhar(__DIR__ . '/../vendor/ondrejnov/eet/src/Schema/EETXMLSchema.xsd');
         if ($neprodukcni) {
             define('WSDL', Util::getFromPhar(__DIR__ . '/../vendor/ondrejnov/eet/src/Schema/PlaygroundService.wsdl'));
-            Console::warning("Neprodukční prostředí. Pro produkční zadejte -d 0.\n");
+            Console::warning("Neprodukční prostředí. Pro produkční zadejte -p 0.\n");
         } else {
             define('WSDL', Util::getFromPhar(__DIR__ . '/../vendor/ondrejnov/eet/src/Schema/ProductionService.wsdl'));
         }
@@ -121,6 +130,25 @@ class Util {
             "bkp" => $bkp,
             "pkp" => $pkp
         ));
+    }
+
+    function expandMacros($str, $request) {
+        $search = Array();
+        $replace = Array();
+        foreach ($request as $k => $v) {
+            $key = "/{" . $k . "}/";
+            if (is_object($v)) {
+                $value = $v->format("d.m.Y H:i");
+            } else {
+                $value = $v;
+            }
+            $search[] = $key;
+            $replace[] = $value;
+            Console::trace("Adding macro {$k}=$value\n");
+        }
+        $out = stripcslashes(preg_replace(
+                        $search, $replace, $str));
+        return($out);
     }
 
 }

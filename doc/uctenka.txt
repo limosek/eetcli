@@ -1,0 +1,17 @@
+EETCli
+Lukas Macura
+http://macura.cz/
+Pokud se Vam tento program libi, muzete podporit vyvoj na Paypal: lukas@macura.cz
+
+DIC: {dic_popl}
+
+Doklad cislo: {porad_cis}
+Datum: {dat_trzby}
+
+Provozovna: {id_provoz}
+Pokladna: {id_pokl}
+Rezim: Bezny
+BKP: {bkp}
+FIK: {fik}
+
+http://github.com/limosek/eetcli/

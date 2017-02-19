@@ -31,7 +31,7 @@ class Config {
 
     const C_REQUIRED = 1;
     const C_OPTIONAL = 2;
-    const E_PARMS = 1;
+    const E_PARMS = 100;
 
     private static $opts;
     private static $usage;
@@ -158,6 +158,14 @@ class Config {
     public function getOpt($key) {
         if (isset(self::$opts->$key)) {
             return(self::$opts->$key->value);
+        } else {
+            Console::error(self::E_PARMS, "Unknown option $key.\n");
+        }
+    }
+    
+    public function setOpt($key, $value) {
+        if (isset(self::$opts->$key)) {
+            self::$opts->$key->value = $value;
         } else {
             Console::error(self::E_PARMS, "Unknown option $key.\n");
         }

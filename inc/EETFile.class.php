@@ -18,6 +18,7 @@
  */
 
 namespace Eetcli;
+
 use Eetcli\Console;
 use Eetcli\Config;
 use Ondrejnov\EET\Dispatcher;
@@ -46,14 +47,19 @@ class EETFile {
     const I_REPLY = 8;
     const I_CHECK = 16;
     const I_DATE = 32;
+    const I_BOOL = 64;
     const VERSION = "0.1";
 
     static $ITEMS;
     var $filename;
     var $filemode;
+    var $lockfile;
     var $items = Array();
     var $playground;
     var $overovaci;
+    var $status;
+    var $lasterror;
+    var $lasterrorcode = 0;
 
     /* Initialises new Eetcli\File object 
      * @param $filename Filename of EET file
@@ -69,7 +75,7 @@ class EETFile {
             "uuid_zpravy" => self::I_REQUIRED | self::I_REQUEST,
             "dat_odesl" => self::I_REQUIRED | self::I_REQUEST | self::I_DATE,
             "prvni_zaslani" => self::I_REQUIRED | self::I_REQUEST,
-            "overeni" => self::I_OPTIONAL | self::I_REQUEST,
+            "overeni" => self::I_OPTIONAL | self::I_REQUEST | self::I_BOOL,
             "dic_popl" => self::I_REQUIRED | self::I_REQUEST,
             "dic_poverujiciho" => self::I_OPTIONAL | self::I_REQUEST,
             "id_provoz" => self::I_REQUIRED | self::I_REQUEST,
@@ -96,6 +102,7 @@ class EETFile {
         );
         $this->filename = $filename;
         $this->filemode = $mode;
+        $this->lockfile = "$filename.lock";
         $this->items["dat_odesl"] = "";
         $this->playground = $playground;
         $this->overovaci = $overovaci;
@@ -106,18 +113,20 @@ class EETFile {
         switch ($mode) {
             case self::MODE_R:
                 self::load();
+                if (array_key_exists("fik", $this->items)) {
+                    $this->status = 2;
+                } elseif (array_key_exists("pkp", $this->items)) {
+                    $this->status = 1;
+                } else {
+                    $this->status = 0;
+                }
                 break;
             case self::MODE_W:
-                if (!self::lock()) {
-                    throw new Exception("Cannot lock file $filename.");
-                }
+                self::lock();
                 break;
             case self::MODE_RW:
-                if (!self::lock()) {
-                    throw new Exception("Cannot lock file $filename.");
-                } else {
-                    self::load();
-                }
+                self::lock();
+                self::load();
                 break;
         }
         return(true);
@@ -127,8 +136,20 @@ class EETFile {
         if (fputs($f, $str) == strlen($str)) {
             return(true);
         } else {
-            throw new Exception("Cannot write to file $filename.");
+            throw new \Exception("Cannot write to file $filename.", Util::E_FILE);
         }
+    }
+
+    public function setStatus($status) {
+        $this->status = $status;
+    }
+
+    public function setError($msg) {
+        $this->lasterrorcode = $msg;
+    }
+
+    public function setErrorCode($code) {
+        $this->lasterror = $code;
     }
 
     /*
@@ -142,9 +163,13 @@ class EETFile {
         } else {
             $prostredi = "produkcni";
         }
+
         if ($f) {
             self::puts($f, "[eetfile]" . PHP_EOL
                     . "version=" . self::VERSION . PHP_EOL
+                    . "status=$this->status" . PHP_EOL
+                    . "lasterror=$this->lasterror" . PHP_EOL
+                    . "lasterrorcode=$this->lasterrorcode" . PHP_EOL
                     . "prostredi=$prostredi" . PHP_EOL . PHP_EOL
                     . "[eet]" . PHP_EOL
             );
@@ -158,9 +183,10 @@ class EETFile {
                 }
             }
         } else {
-            throw new Exception("Cannot write to file $filename.");
+            throw new \Exception("Cannot write to file $filename.", Util::E_FILE);
         }
         fclose($f);
+        self::unlock();
     }
 
     /*
@@ -173,26 +199,39 @@ class EETFile {
             if (array_key_exists($key, self::$ITEMS)) {
                 if (self::$ITEMS[$key] & self::I_DATE) {
                     $this->items[$key] = $value->format("c");
+                } elseif (self::$ITEMS[$key] & self::I_BOOL) {
+                    $this->items[$key] = (int) $value;
                 } else {
-                    $this->items[$key] = $value;
+                    if ($value) {
+                        $this->items[$key] = $value;
+                    }
                 }
-            } else {
-                //throw new \Exception("Unknown item $key");
             }
         }
     }
-    
+
     /*
      * Generate receipt from EET file
      * @return $receipt
      */
 
     public function toReceipt() {
+        $d = Util::initDispatcher($this->playground, $this->overovaci);
         $r = New Receipt();
-        foreach (self::$ITEMS as $key=>$option) {
-            if (($option & self::I_REQUEST) && array_key_exists($key,$this->items)) {
-                $r->$key=$this->items[$key];
+        foreach (self::$ITEMS as $key => $option) {
+            if (($option & self::I_REQUEST) && array_key_exists($key, $this->items)) {
+                if ($this->items[$key] && !($option & self::I_BOOL)) {
+                    $r->$key = $this->items[$key];
+                } else {
+                    if ($option & self::I_BOOL) {
+                        $r->$key = (bool) $this->items[$key];
+                    }
+                }
             }
+        }
+        $codes = Util::getCheckCodes($d, $r, $this->playground, $this->overovaci);
+        if ($codes["bkp"] != $this->items["bkp"] || $codes["pkp"] != $this->items["pkp"]) {
+            throw New \Exception("Kontrolni kody EET v uctence nesouhlasi!", Util::E_CHECKCODES);
         }
         return($r);
     }
@@ -203,25 +242,47 @@ class EETFile {
 
     public function load() {
         if (file_exists($this->filename)) {
-            $ini = parse_ini_file($this->filename,true);
+            $ini = parse_ini_file($this->filename, true);
             if (!array_key_exists("eetfile", $ini) || !array_key_exists("version", $ini["eetfile"]) || $ini["eetfile"]["version"] <> self::VERSION
             ) {
-                print_r($ini);
-                throw new \Exception("File $this->filename is not EET file format.");
+                throw new \Exception("File $this->filename is not EET file format.", Util::E_FORMAT);
             } else {
                 foreach (self::$ITEMS as $key => $option) {
                     if (($option & self::I_REQUIRED) && (!array_key_exists($key, $ini["eet"]))
                     ) {
-                        throw new Exception("Missing required $key in EET file.");
+                        throw new \Exception("Missing required $key in EET file.", Util::E_FORMAT);
                     } else {
-                        if (array_key_exists($key,$ini["eet"])) {
-                            $this->items["$key"] = $ini["eet"][$key];
+                        if (array_key_exists($key, $ini["eet"])) {
+                            if ($option & self::I_DATE) {
+                                $this->items["$key"] = New \DateTime($ini["eet"][$key]);
+                            } else {
+                                $this->items["$key"] = $ini["eet"][$key];
+                            }
                         }
                     }
                 }
+                if (array_key_exists("lasterror", $ini["eetfile"])) {
+                    $this->lasterror = $ini["eetfile"]["lasterror"];
+                } else {
+                    $this->lasterror = "";
+                }
+                if (array_key_exists("status", $ini["eetfile"])) {
+                    $this->status = $ini["eetfile"]["status"];
+                } else {
+                    $this->status = 0;
+                }
+                if (array_key_exists("prostredi", $ini["eetfile"])) {
+                    if ($ini["eetfile"]["prostredi"] == "playground") {
+                        $this->playground = 1;
+                    } else {
+                        $this->playground = 0;
+                    }
+                } else {
+                    $this->playground = 0;
+                }
             }
         } else {
-            throw new Exception("File $this->filename does not exists.");
+            throw new \Exception("File $this->filename does not exists.", Util::E_FILE);
         }
     }
 
@@ -231,7 +292,15 @@ class EETFile {
      */
 
     public function lock() {
-        return(true);
+        if (file_exists($this->lockfile)) {
+            throw new \Exception("Cannot lock file $this->filename ($this->lockfile exists).", Util::E_LOCK);
+        } else {
+            if (touch($this->lockfile)) {
+                return(true);
+            } else {
+                throw new \Exception("Cannot lock file $this->filename (cannot create $this->lockfile)", Util::E_LOCK);
+            }
+        }
     }
 
     /*
@@ -240,7 +309,9 @@ class EETFile {
      */
 
     public function unlock() {
-        return(true);
+        if (!unlink($this->lockfile)) {
+            throw new \Exception("Cannot unlock file $this->filename (cannot remove $this->lockfile)", Util::E_LOCK);
+        }
     }
 
 }
