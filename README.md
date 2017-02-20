@@ -1,17 +1,25 @@
 
 # EETCLI - Commandline klient pro EET (etrzby.cz)
 
-Tento klient slouží pro odesílání tržeb pomocí skriptu nebo externího programu. Základním zadáním bylo udělat co nejjednodušší implementaci. 
-Je mi jasné, že čisté "C" by asi bylo mnohem čistější, ale PHP bylo jednodušší. 
-Snažil jsem se o maximální multiplatformnost. Vzhledem k použití phar je jediná závislost na PHP, které je dostupné skoro na každém systému.
-Klient sám o sobě neřeší žádnou evicenci dokladů a neřeší ani generování pořadových čísel dokladů. Pouze odesílá tržby na základě jasných požadavků.
-V případě, že dojde k chybě, vrátí návratový kód. V opačném případě vrací FIK na standardním výstupu.
-Klient by měl běžet i na relativně slabých systémech jako je raspberry PI. Může být spouštěn i jako externí program například z účetního software při vytvoření paragonu.
+Tento klient slouží pro odesílání tržeb pomocí skriptu nebo externího programu.
+Základním zadáním bylo udělat co nejjednodušší a nejodolnější implementaci tak,
+aby klient sice jen odesílal data na server ale v případě potřeby i uchovával informace 
+pro pozdější kontrolu. 
 
-Klient pracuje buďto pouze pomocí parametrů příkazové řádky, kombinací s ini soubory nebo podle .eet souborů. EET soubor je textový soubor, ve kterém
-jsou uloženy všechny podstatné informace o stavu účtenky a všech kontrolních kódech. Bližší informace viz [EET file](doc/EETFile.md).
+# Vlastnosti
 
-Klient umí i vypsat hotovou účtenku na standardní výstup pomocí parametru *--format @sablonauctenky.txt*
+* Multiplatformnost (PHP+PHAR)
+* Jednoduchost (řeší se pouze načtení, vytvoření a odeslání účtenky)
+* Vše ostatní je na skriptech a aplikacích, které klienta využijí
+* V základním režimu pouze vrací FIK
+* V rozšířeném režimu může vrátit jakoukoliv položku z EET
+* Může být použit i k vytvoření účtenky pomocí parametru *--format @sablonauctenky.txt*
+* Umí načíst, vytvořit, zapsat, otestovat a odeslat EET soubor [EETFile](doc/EETFile.md)
+* EET soubor může být vytvořen i externí aplikací, například účetním programem
+* Může být spouštěn i jako externí program například z účetního software při vytvoření paragonu.
+* Konfigurace v ini souboru nebo přímo z příkazové řádky
+* V základní konfiguraci nastaven pro neprodukční prostředí a ověřovací režím. 
+* Dokud nenastavíte DIČ (v ini nebo *--dic*), klient vrací výchozí testovací účtenku.
 
 # Licence
 
@@ -88,7 +96,7 @@ Options:
 Pouzijte eetcli -h -d 4 pro vice informaci.
 ```
 
-## Konfigurace
+# Konfigurace
 Všechny parametry mohou být zadány přímo přes příkazovou řádku, nicméně pokud si vytvoříte ini soubor, můžete některé věci přednastavit.
 Můžete vyjít z eetcli.ini.dist. Nezapomeňte, že dokud nenakonfigurujete své údaje, *klient funguje v ověřovacím režimu* s testovacími certifikáty!
 INI soubor se načítá z těchto umístění v tomto pořadí:
@@ -126,7 +134,7 @@ pokladna=1
 provozovna=181
 ```
 
-## Příklady bez použití EET souboru
+# Příklady bez použití EET souboru
 Odešli tržbu 500,-Kč v ověřovacím režimu, použij klíč abcd.pem a certifikat abcd.crt. Použij pořadové číslo 1, pokladnu 1 a provozovnu 11.
 ```
 $ eetcli --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500 -n
@@ -144,7 +152,7 @@ eetcli --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba
 0210c205-1f2f-40a9-be8a-9f7eb7953aa5-xx
 ```
 
-## Příklady s použitím EET souboru
+# Příklady s použitím EET souboru
 Vytvoření EET souboru, který se bude jmenovat dle UUID.
 ```
 eetcli -N {uuid_zpravy}.eet
@@ -179,17 +187,21 @@ wget https://raw.githubusercontent.com/limosek/eetcli/0.2/bin/eetcli
 chmod +x eetcli
 ./eetcli -h
 ```
-Pokud chcete, můžete klienta přidat i do spustitelné cesty, takže bude zavolatelný z jakéhokoliv místa. 
+Pokud chcete, můžete klienta přidat i do spustitelné cesty, takže bude zavolatelný
+z jakéhokoliv místa. 
 
-Certifikáty pro EET jsou distribuovány jako .p12 soubory. Tento klient vyžaduje .pem a .crt soubory, které je potřeba extrahovar z .p12.
-Pokud máte nainstalovaný program make a openssl, můžete si certifikát převést takto (pouze pokud si stáhnete git repozitář):
+Certifikáty pro EET jsou distribuovány jako .p12 soubory.
+Tento klient vyžaduje .pem a .crt soubory, které je potřeba extrahovar z .p12.
+Pokud máte nainstalovaný program make a openssl, 
+můžete si certifikát převést takto (pouze pokud si stáhnete git repozitář):
 ```
 git clone https://github.com/limosek/eetcli.git
 cd eetcli
 # Zkopirujte svuj .p12 klic do adresare keys/ a nasledne
 make pem P12=keys/muj_klic.p12 PASS=heslo_ke_klici 
 ```
-V adresáři keys pak vzniknou nové soubory .pem a .crt, které můžete použít a odkázat se na ně například z ini souboru.
+V adresáři keys pak vzniknou nové soubory .pem a .crt, které můžete použít a 
+odkázat se na ně například z ini souboru.
 
 # Vývoj a kustomizace phar
 
@@ -197,8 +209,10 @@ Pokud chcete pomoci s vývojem, určitě neodmítnu :)
 Teoreticky si můžete vytvořit svůj vlastní phar archív a uložit do něj své klíče i ini soubor.
 Stačí na to pustit make a vytvoří se eetcli.phar který je modifikován pro
 vaše použití. *Součástí takového balíku jsou pak všechny klíče* z adresáře
-keys tak  *eetcli.ini*. S tím jsou zase samozřejmě spojeny bezpečnostní věci, tedy že byste pak neměli phar archív nikdy dát z ruky, ale to už je mimo rámec tohoto dokumentu.
-Pokud chcete vytvořit vývojové prostředí, potřebujete mít k dispozici php, phar, composer a make. Pro vytvoření phar archivu můžete použít:
+keys tak  *eetcli.ini*. S tím jsou zase samozřejmě spojeny bezpečnostní věci, 
+tedy že byste pak neměli phar archív nikdy dát z ruky, ale to už je mimo rámec tohoto dokumentu.
+Pokud chcete vytvořit vývojové prostředí, potřebujete mít k dispozici php, phar,
+composer a make. Pro vytvoření phar archivu můžete použít:
 ```
 git clone git@github.com:limosek/eetcli.git
 cd eetcli
