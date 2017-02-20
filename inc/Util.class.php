@@ -21,8 +21,10 @@ namespace Eetcli;
 
 use Eetcli\Console;
 use Eetcli\Config;
+use Eetcli\EETFile;
 use Ondrejnov\EET\Dispatcher;
-
+use Ondrejnov\EET\Receipt;
+use Ondrejnov\EET\Utils\UUID;
 /**
  * Description of Util
  *
@@ -87,22 +89,22 @@ class Util {
 
         Util::getFromPhar(__DIR__ . '/../vendor/ondrejnov/eet/src/Schema/EETXMLSchema.xsd');
         if ($neprodukcni) {
-            define('WSDL', Util::getFromPhar(__DIR__ . '/../vendor/ondrejnov/eet/src/Schema/PlaygroundService.wsdl'));
+            $wsdl = Util::getFromPhar(__DIR__ . '/../vendor/ondrejnov/eet/src/Schema/PlaygroundService.wsdl');
             Console::warning("Neprodukční prostředí. Pro produkční zadejte -p 0.\n");
         } else {
-            define('WSDL', Util::getFromPhar(__DIR__ . '/../vendor/ondrejnov/eet/src/Schema/ProductionService.wsdl'));
+            $wsdl = Util::getFromPhar(__DIR__ . '/../vendor/ondrejnov/eet/src/Schema/ProductionService.wsdl');
         }
 
         if ($overovaci) {
             Console::warning("Ověřovací režim. Pro ostry zadejte -n 0.\n");
         }
-        Console::debug("WSDL: " . WSDL . "\n");
-        Console::debug("Key: " . Config::getOpt("key") . "\n");
-        Console::debug("Cert: " . Config::getOpt("crt") . "\n");
-        Console::debug("DIC: " . Config::getOpt("dic") . "\n");
+        Console::debug("WSDL: " . $wsdl . PHP_EOL);
+        Console::debug("Key: " . Config::getOpt("key") . PHP_EOL);
+        Console::debug("Cert: " . Config::getOpt("crt") . PHP_EOL);
+        Console::debug("DIC: " . Config::getOpt("dic") . PHP_EOL);
 
         try {
-            $dispatcher = new Dispatcher(WSDL, Config::getOpt("key"), Config::getOpt("crt"));
+            $dispatcher = new Dispatcher($wsdl, Config::getOpt("key"), Config::getOpt("crt"));
         } catch (Exception $e) {
             Console::error($e->getCode(), $e->getMessage());
         }
@@ -133,8 +135,16 @@ class Util {
     }
 
     function expandMacros($str, $request) {
-        $search = Array();
-        $replace = Array();
+        $search = Array(
+            "fik" => "/{fik}/",
+            "pkp" => "/{pkp}/",
+            "bkp" => "/{bkp}/"
+        );
+        $replace = Array(
+            "fik" => "",
+            "pkp" => "",
+            "bkp" => ""
+        );
         foreach ($request as $k => $v) {
             $key = "/{" . $k . "}/";
             if (is_object($v)) {
@@ -142,13 +152,58 @@ class Util {
             } else {
                 $value = $v;
             }
-            $search[] = $key;
-            $replace[] = $value;
-            Console::trace("Adding macro {$k}=$value\n");
+            $search[$k] = $key;
+            $replace[$k] = $value;
+            Console::trace("Adding macro {$k}=$value" . PHP_EOL);
         }
         $out = stripcslashes(preg_replace(
                         $search, $replace, $str));
         return($out);
+    }
+    
+    public function getMacros() {
+        $macros = Array();
+        $eet=New EETFile(false);
+        foreach ($eet->ITEMS as $key => $option) {
+            $macros[] = "{".$key."}";
+        }
+        return($macros);
+    }
+    
+    public function eetCodeToError($code) {
+        if ($code==-1) {
+            $code=1;
+        }
+        return($code);
+    }
+    
+    public function receiptFromParams() {
+        $r = new Receipt();
+        if (Config::getOpt("uuid")) {
+            $uuid = Config::getOpt("uuid");
+        } else {
+            $uuid = UUID::v4();
+        }
+        $r->uuid_zpravy = $uuid;
+        $r->dic_popl = Config::getOpt("dic");
+        if (Config::getOpt("provozovna")) {
+            $r->id_provoz = Config::getOpt("provozovna");
+        } else {
+            $r->id_provoz = 1;
+        }
+        if (Config::getOpt("pokladna")) {
+            $r->id_pokl = Config::getOpt("pokladna");
+        } else {
+            $r->id_pokl = 1;
+        }
+        if (Config::getOpt("pc")) {
+            $r->porad_cis = Config::getOpt("pc");
+        } else {
+            $r->porad_cis = 1;
+        }
+        $r->dat_trzby = New \DateTime(Config::getOpt("cas"));
+        $r->celk_trzba = Config::getOpt("trzba");
+        return($r);
     }
 
 }

@@ -8,6 +8,11 @@ Klient sám o sobě neřeší žádnou evicenci dokladů a neřeší ani generov
 V případě, že dojde k chybě, vrátí návratový kód. V opačném případě vrací FIK na standardním výstupu.
 Klient by měl běžet i na relativně slabých systémech jako je raspberry PI. Může být spouštěn i jako externí program například z účetního software při vytvoření paragonu.
 
+Klient pracuje buďto pouze pomocí parametrů příkazové řádky, kombinací s ini soubory nebo podle .eet souborů. EET soubor je textový soubor, ve kterém
+jsou uloženy všechny podstatné informace o stavu účtenky a všech kontrolních kódech. Bližší informace viz [EET file](doc/EETFile.md).
+
+Klient umí i vypsat hotovou účtenku na standardní výstup pomocí parametru *--format @sablonauctenky.txt*
+
 # Licence
 
 Tento projekt je licencován pod GPL3. Zříkám se jakékoliv zodpovědnosti při používání tohoto programu.
@@ -20,16 +25,43 @@ Použil jsem komponenty třetích stran, které jsou rovněž šířeny pod otev
 # Použití
 Malý návod k použití je i součástí samotného příkazu.
 ```
-$ eetcli -h
-
+$ eetcli.php -h
+eetcli [--options]
 Seznam dostupnych maker na vystupu v poli format:
-{FIK} - fik kod
-{BKP} - bkp kod
-{PKP} - pkp kod
+Poznamka: format muze zacinat znakem '@' coz znamena, ze bude nacten ze souboru, ne z parametru. Napr. @soubor.txt.
+ {fik}		 fik kod
+ {bkp}		 bkp kod
+ {pkp}		 pkp kod
+   a dalsi: {uuid_zpravy},{dat_odesl},{prvni_zaslani},{overeni},{dic_popl},{dic_poverujiciho},{id_provoz},{id_pokl},{porad_cis},{dat_trzby},{celk_trzba},{zakl_nepodl_dph},{zakl_dan1},{dan1},{zakl_dan2},{dan2},{zakl_dan3},{dan3},{cest_sluz},{pouzit_zboz1},{pouzit_zboz2},{pouzit_zboz3},{urceno_cerp_zuct},{cerp_zuct},{pkp},{bkp},{fik}
 
 Seznam promennych prostredi, ktere je mozno pouzit:
-TMP - adresar pro docasne soubory
-EETCLI_DEBUG - debug level (0-4)
+ TMP		 adresar pro docasne soubory
+ EETCLI_DEBUG	 debug level (0-4)
+
+Mody pouziti:
+-N file.eet		 Vytvor EET soubor z parametru a nikam nezasilej. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}
+-C file.eet		 Vytvor EET soubor z parametru a zaroven zasli na etrzby. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}
+-S file.eet		 Nacti EET soubor a pokud jeste nebyl zaslan, posli na etrzby. Nasledne uloz pod stejnym jmenem. V pripade, ze uz byl dany eet soubor zaslan drive, vrati se chyba.
+-P file.eet		 Nacti EET soubor, otestuj jeho stav a pouze vypis informace podle format. Pokud nesedi kontrolni soucty, vrat chybu.
+-T file.eet		 Nacti EET soubor, otestuj jeho stav a pouze vrat chybove hlaseni a navratovy kod podle stavu souboru.
+
+Navratove kody:
+1	 Docasna technicka chyba zpracovani - odeslete prosim datovou zpravu pozdeji
+2	 Kodovani XML neni platne
+3	 XML zprava nevyhovela kontrole XML schematu
+4	 Neplatny podpis SOAP zpravy
+5	 Neplatny kontrolni bezpecnostni kod poplatnika (BKP)
+6	 DIC poplatnika ma chybnou strukturu
+7	 Datova zprava je prilis velka
+8	 Datova zprava nebyla zpracovana kvuli technicke chybe nebo chybe dat
+20	 Chyba pri praci se souborem
+21	 Uctenka jiz byla zaslana
+22	 Chyba v parametrech
+23	 Chyba ve formatu souboru
+24	 Chyba pri uzamykani souboru
+25	 Uctenka je nova (vysledek testu)
+26	 Uctenka jiz byla zaslana (vysledek testu)
+27	 Kontrolni soucty v EET souboru nesedi
 
 Options:
   -d, --debug <arg>       
@@ -48,6 +80,11 @@ Options:
   --cas <arg>             
   --trzba <arg>           
   --format <arg>          
+  -N, --create-eet [<arg>] 
+  -C, --create-send-eet [<arg>] 
+  -S, --send-eet [<arg>]  
+  -P, --print-eet [<arg>] 
+  -T, --test-eet [<arg>]  
 Pouzijte eetcli -h -d 4 pro vice informaci.
 ```
 
@@ -89,7 +126,7 @@ pokladna=1
 provozovna=181
 ```
 
-## Příklady
+## Příklady bez použití EET souboru
 Odešli tržbu 500,-Kč v ověřovacím režimu, použij klíč abcd.pem a certifikat abcd.crt. Použij pořadové číslo 1, pokladnu 1 a provozovnu 11.
 ```
 $ eetcli --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500 -n
@@ -105,6 +142,28 @@ nebo ostrý režim a ostré prostředí
 ```
 eetcli --crt abcd.crt --key abcd.pem --pc 1 --pokladna 1 --provozovna 11 --trzba 500 -p 0 -n 0
 0210c205-1f2f-40a9-be8a-9f7eb7953aa5-xx
+```
+
+## Příklady s použitím EET souboru
+Vytvoření EET souboru, který se bude jmenovat dle UUID.
+```
+eetcli -N {uuid_zpravy}.eet
+```
+
+Zaslání vytvořeného souboru na server. Pokud se vše podaří, uloží informace a fik zpět do EET souboru.
+Pokud ne, uloží do EET souboru stav jako neodeslaný.
+```
+eetcli -S b7bc6474-47aa-aaaa-81fb-45e4f715aaaa.eet
+```
+
+Test kontrolních kódů v EET souboru
+```
+eetcli -T soubor.eet
+```
+
+Vypsání EET souboru jako účtenky
+```
+eetcli -P soubor.eet --format '@doc/uctenka.txt'
 ```
 
 # Instalace

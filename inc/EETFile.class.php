@@ -34,9 +34,10 @@ class EETFile {
      * Mody otevreni souboru (read only, write only, rw)
      */
 
-    const MODE_R = 1;
-    const MODE_W = 2;
-    const MODE_RW = 3;
+    const MODE_R = 1;   // Read only
+    const MODE_W = 2;   // Write only (create)
+    const MODE_RW = 3;  // RW
+    const MODE_D = 4;   // Dry (create object only)
 
     /*
      * Typy polozek k odeslani
@@ -48,9 +49,9 @@ class EETFile {
     const I_CHECK = 16;
     const I_DATE = 32;
     const I_BOOL = 64;
-    const VERSION = "0.1";
+    const VERSION = "1.0";
 
-    static $ITEMS;
+    var $ITEMS;
     var $filename;
     var $filemode;
     var $lockfile;
@@ -67,14 +68,14 @@ class EETFile {
      * @return true or throw exception
      */
 
-    public function __construct($filename, $mode = self::MODE_R, $playground = false, $overovaci = false) {
+    public function __construct($filename, $mode = self::MODE_D, $playground = false, $overovaci = false) {
         /*
          * Polozky dle specifikace EET
          */
-        self::$ITEMS = Array(
+        $this->ITEMS = Array(
             "uuid_zpravy" => self::I_REQUIRED | self::I_REQUEST,
             "dat_odesl" => self::I_REQUIRED | self::I_REQUEST | self::I_DATE,
-            "prvni_zaslani" => self::I_REQUIRED | self::I_REQUEST,
+            "prvni_zaslani" => self::I_REQUIRED | self::I_REQUEST | self::I_BOOL,
             "overeni" => self::I_OPTIONAL | self::I_REQUEST | self::I_BOOL,
             "dic_popl" => self::I_REQUIRED | self::I_REQUEST,
             "dic_poverujiciho" => self::I_OPTIONAL | self::I_REQUEST,
@@ -122,11 +123,16 @@ class EETFile {
                 }
                 break;
             case self::MODE_W:
+                if (file_exists($this->filename)) {
+                    throw New \Exception("Soubor EET jiz existuje!", Util::E_FILE);
+                }
                 self::lock();
                 break;
             case self::MODE_RW:
                 self::lock();
                 self::load();
+                break;
+            case self::MODE_D:
                 break;
         }
         return(true);
@@ -173,7 +179,7 @@ class EETFile {
                     . "prostredi=$prostredi" . PHP_EOL . PHP_EOL
                     . "[eet]" . PHP_EOL
             );
-            foreach (self::$ITEMS as $key => $options) {
+            foreach ($this->ITEMS as $key => $options) {
                 if ($options & self::I_REQUIRED) {
                     self::puts($f, $key . "=" . $this->items[$key] . PHP_EOL);
                 } elseif ($options & self::I_OPTIONAL) {
@@ -196,10 +202,10 @@ class EETFile {
 
     public function fromReceipt($receipt) {
         foreach ($receipt as $key => $value) {
-            if (array_key_exists($key, self::$ITEMS)) {
-                if (self::$ITEMS[$key] & self::I_DATE) {
+            if (array_key_exists($key, $this->ITEMS)) {
+                if ($this->ITEMS[$key] & self::I_DATE) {
                     $this->items[$key] = $value->format("c");
-                } elseif (self::$ITEMS[$key] & self::I_BOOL) {
+                } elseif ($this->ITEMS[$key] & self::I_BOOL) {
                     $this->items[$key] = (int) $value;
                 } else {
                     if ($value) {
@@ -215,10 +221,9 @@ class EETFile {
      * @return $receipt
      */
 
-    public function toReceipt() {
-        $d = Util::initDispatcher($this->playground, $this->overovaci);
+    public function toReceipt($d) {
         $r = New Receipt();
-        foreach (self::$ITEMS as $key => $option) {
+        foreach ($this->ITEMS as $key => $option) {
             if (($option & self::I_REQUEST) && array_key_exists($key, $this->items)) {
                 if ($this->items[$key] && !($option & self::I_BOOL)) {
                     $r->$key = $this->items[$key];
@@ -230,8 +235,10 @@ class EETFile {
             }
         }
         $codes = Util::getCheckCodes($d, $r, $this->playground, $this->overovaci);
-        if ($codes["bkp"] != $this->items["bkp"] || $codes["pkp"] != $this->items["pkp"]) {
-            throw New \Exception("Kontrolni kody EET v uctence nesouhlasi!", Util::E_CHECKCODES);
+        if (is_array($this->items) && array_key_exists("bkp",$this->items)) {
+            if ($codes["bkp"] != $this->items["bkp"] || $codes["pkp"] != $this->items["pkp"]) {
+                throw New \Exception("Kontrolni kody EET v uctence nesouhlasi!", Util::E_CHECKCODES);
+            }
         }
         return($r);
     }
@@ -247,8 +254,8 @@ class EETFile {
             ) {
                 throw new \Exception("File $this->filename is not EET file format.", Util::E_FORMAT);
             } else {
-                foreach (self::$ITEMS as $key => $option) {
-                    if (($option & self::I_REQUIRED) && (!array_key_exists($key, $ini["eet"]))
+                foreach ($this->ITEMS as $key => $option) {
+                    if ($key != "dat_odesl" && ($option & self::I_REQUIRED) && (!array_key_exists($key, $ini["eet"]))
                     ) {
                         throw new \Exception("Missing required $key in EET file.", Util::E_FORMAT);
                     } else {
