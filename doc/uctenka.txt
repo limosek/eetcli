@@ -1,7 +1,11 @@
+
+################################
 Opensource EET klient eetcli
-Lukas Macura
-http://macura.cz/
-Pokud se Vam tento program libi, muzete podporit vyvoj na Paypal: lukas@macura.cz
+Lukas Macura http://macura.cz/
+Pokud se Vam tento program libi, 
+muzete podporit vyvoj na 
+Paypal: lukas@macura.cz
+#################################
 
 DIC: {dic_popl}
 Doklad cislo: {porad_cis}
@@ -13,3 +17,6 @@ BKP: {bkp}
 FIK: {fik}
 
 Vice informaci na http://github.com/limosek/eetcli/
+###################################################
+
+
