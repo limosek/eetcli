@@ -105,6 +105,7 @@ class Config {
         foreach (self::$opts as $opt) {
             $key = $opt->option;
             self::$opts->$key->value = self::$opts->$key->default;
+            self::$opts->$key->isdefault = true;
         }
         foreach (self::$opts as $opt) {
             $key = $opt->option;
@@ -115,12 +116,14 @@ class Config {
                         Console::trace("Setting option $key from INI file to value '$value'." . PHP_EOL);
                         self::$opts->$key->value = $value;
                         self::$opts->$key->fromini = true;
+                        self::$opts->$key->isdefault = false;
                     }
                     if (array_key_exists("$c.$key", $ini[$c])) {
                         $value = $ini[$c]["$c.$key"];
                         Console::trace("Setting option $c.$opt->option from INI file to value '$value'." . PHP_EOL);
                         self::$opts->$key->value = $value;
                         self::$opts->$key->fromini = true;
+                        self::$opts->$key->isdefault = false;
                     }
                 }
             }
@@ -133,6 +136,7 @@ class Config {
                 Console::trace("Setting option $key from ENV variable $ekey to value '$value'." . PHP_EOL);
                 self::$opts->$key->value = $value;
                 self::$opts->$key->fromenv = true;
+                self::$opts->$key->isdefault = false;
             }
         }
         try {
@@ -150,6 +154,7 @@ class Config {
                 Console::trace("Setting option $key from CLI to vale '$value'." . PHP_EOL);
                 self::$opts->$key->value = $value;
                 self::$opts->$key->fromcli = true;
+                self::$opts->$key->isdefault = false;
             }
         }
         if (self::getOpt("debug")) {
@@ -202,6 +207,10 @@ class Config {
         } else {
             Console::error(self::E_PARMS, "Unknown option $key." . PHP_EOL);
         }
+    }
+    
+    public function isDefaultOpt($key) {
+        return(self::$opts->$key->isdefault);
     }
 
     public function getArgs() {

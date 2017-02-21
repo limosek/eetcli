@@ -8,8 +8,8 @@
 ;errors=eet.log
 
 [eet]
-; Vychozi stav v distribucnim balicku je overovaci. Odkomentujte pro ostry
-overovaci=1
+; Odkomentujte pro overovaci rezim
+;overovaci=1
 ; Vychozi stav v distribucnim balicku je neprodukcni prostredi. Odkomentujte pro ostry
 neprodukcni=1
 ; Format, ve kterem se vypisi data. Je mozno pouzit \n,\r a jine znacky. Makra budou zamenena za kody. 
@@ -22,6 +22,6 @@ neprodukcni=1
 
 [firma]
 ; Vychozi informace pro testovaci certifikat. Zamente za vase data
-dic=CZ1212121218
-pokladna=1
-provozovna=181
+;dic=CZ1212121218
+;pokladna=1
+;provozovna=181

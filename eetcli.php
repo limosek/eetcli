@@ -72,6 +72,8 @@ if (getenv("EETCLI_DEBUG")) {
 Console::init($dbg);
 Config::init();
 Config::setUsage("eetcli [--options]" . PHP_EOL
+        . "Opensource klient pro etrzby.cz licencovany pod GPL3" . PHP_EOL
+        . "Vice informaci na http://github.com/limosek/eetcli/" . PHP_EOL . PHP_EOL
         . "Seznam dostupnych maker na vystupu v poli format:" . PHP_EOL
         . "Poznamka: format muze zacinat znakem '@' coz znamena, ze bude nacten ze souboru, ne z parametru. Napr. @soubor.txt." . PHP_EOL
         . " {fik}\t\t fik kod" . PHP_EOL
@@ -80,13 +82,20 @@ Config::setUsage("eetcli [--options]" . PHP_EOL
         . "   a dalsi: " . join(",", Util::getMacros()) . PHP_EOL . PHP_EOL
         . "Seznam promennych prostredi, ktere je mozno pouzit:" . PHP_EOL
         . " TMP\t\t adresar pro docasne soubory" . PHP_EOL
+        . " EETCLI_INI\t ini soubor k nacteni (jinak postupne: " . join(",", array(__DIR__ . "/../eetcli.ini",
+            getenv("HOME") . "/eetcli.ini",
+            getenv("HOME") . "/.eetclirc",
+            "/etc/eetcli.ini",
+            __DIR__ . "/../eetcli.ini.dist"))
+        . PHP_EOL
         . " EETCLI_DEBUG\t debug level (0-4)" . PHP_EOL . PHP_EOL
         . "Mody pouziti:" . PHP_EOL
-        . "-N file.eet\t\t Vytvor EET soubor z parametru a nikam nezasilej. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}" . PHP_EOL
-        . "-C file.eet\t\t Vytvor EET soubor z parametru a zaroven zasli na etrzby. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}" . PHP_EOL
-        . "-S file.eet\t\t Nacti EET soubor a pokud jeste nebyl zaslan, posli na etrzby. Nasledne uloz pod stejnym jmenem. V pripade, ze uz byl dany eet soubor zaslan drive, vrati se chyba." . PHP_EOL
-        . "-P file.eet\t\t Nacti EET soubor, otestuj jeho stav a pouze vypis informace podle format. Pokud nesedi kontrolni soucty, vrat chybu." . PHP_EOL
-        . "-T file.eet\t\t Nacti EET soubor, otestuj jeho stav a pouze vrat chybove hlaseni a navratovy kod podle stavu souboru." . PHP_EOL
+        . "-N file.eet\t\t Vytvor EET soubor z parametru a nikam nezasilej. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}" . PHP_EOL . PHP_EOL
+        . "-C file.eet\t\t Vytvor EET soubor z parametru a zaroven zasli na etrzby. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}" . PHP_EOL . PHP_EOL
+        . "-S file.eet\t\t Nacti EET soubor a pokud jeste nebyl zaslan, posli na etrzby. Nasledne uloz pod stejnym jmenem. V pripade, ze uz byl dany eet soubor zaslan drive, vrati se chyba." . PHP_EOL . PHP_EOL
+        . "-P file.eet\t\t Nacti EET soubor, otestuj jeho stav a pouze vypis informace podle format. Pokud nesedi kontrolni soucty, vrat chybu." . PHP_EOL . PHP_EOL
+        . "-T file.eet\t\t Nacti EET soubor, otestuj jeho stav a pouze vrat chybove hlaseni a navratovy kod podle stavu souboru." . PHP_EOL . PHP_EOL
+        . "nebo vubec nepouzit EET soubor a pouze odeslat trzbu (--dic, --trzba, --uuid, ...)" . PHP_EOL
         . PHP_EOL
         . "Navratove kody:" . PHP_EOL
         . "1\t Docasna technicka chyba zpracovani - odeslete prosim datovou zpravu pozdeji" . PHP_EOL
@@ -110,9 +119,9 @@ Config::setUsage("eetcli [--options]" . PHP_EOL
 Config::addOpt(null, "key", Config::C_REQUIRED, "Certificate private key (pem format)", __DIR__ . "/keys/EET_CA1_Playground-CZ1212121218.pem");
 Config::addOpt(null, "crt", Config::C_REQUIRED, "Certificate public key (pem format)", __DIR__ . "/keys/EET_CA1_Playground-CZ1212121218.crt");
 Config::addOpt("n", "overovaci", Config::C_OPTIONAL, "Overovaci rezim", 0);
-Config::addOpt("p", "neprodukcni", Config::C_OPTIONAL, "Neprodukcni rezim", 0);
+Config::addOpt("p", "neprodukcni", Config::C_OPTIONAL, "Neprodukcni rezim", 1);
 Config::addOpt(null, "uuid", Config::C_REQUIRED, "UUID");
-Config::addOpt(null, "dic", Config::C_REQUIRED, "Certificate public key (pem format)");
+Config::addOpt(null, "dic", Config::C_REQUIRED, "DIC", "CZ1212121218");
 Config::addOpt(null, "provozovna", Config::C_REQUIRED, "ID provozovny", 1);
 Config::addOpt(null, "pokladna", Config::C_REQUIRED, "ID pokladny", 1);
 Config::addOpt(null, "pc", Config::C_REQUIRED, "Poradove cislo", 1);
@@ -325,9 +334,9 @@ if (Config::getOpt("send-eet")) {
     /*
      * V pripade, ze nejsou zadany zadne volby a klient je ve vychozim rezimu, vypis zakladni uctenku
      */
-    if (preg_match("#CZ1212121218#",Config::getOpt("key"))
-            && Config::getOpt("dic")=="CZ1212121218") {
-        Config::setOpt("format",  file_get_contents(__DIR__ . "/doc/uctenka.txt"));
+    if (preg_match("#CZ1212121218#", Config::getOpt("key")) && Config::isDefaultOpt("dic") && Config::isDefaultOpt("format")
+    ) {
+        Config::setOpt("format", file_get_contents(__DIR__ . "/doc/uctenka.txt"));
         Console::warning("Vracim vychozi uctenku, protoze je pouzity testovaci DIC.\n");
     }
     $dispatcher = Util::initDispatcher(Config::getOpt("neprodukcni"), Config::getOpt("overovaci"));

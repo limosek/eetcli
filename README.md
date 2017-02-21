@@ -17,8 +17,8 @@ pro pozdější kontrolu.
 * Umí načíst, vytvořit, zapsat, otestovat a odeslat EET soubor [EETFile](doc/EETFile.md)
 * EET soubor může být vytvořen i externí aplikací, například účetním programem
 * Může být spouštěn i jako externí program například z účetního software při vytvoření paragonu.
-* Konfigurace v ini souboru nebo přímo z příkazové řádky
-* V základní konfiguraci nastaven pro neprodukční prostředí a ověřovací režím. 
+* Konfigurace v ini souboru nebo přímo z příkazové řádky. Lokace ini souboru je konfigurovatelná.
+* V základní konfiguraci nastaven pro neprodukční prostředí. 
 * Dokud nenastavíte DIČ (v ini nebo *--dic*), klient vrací výchozí testovací účtenku.
 
 # Licence
@@ -35,6 +35,9 @@ Malý návod k použití je i součástí samotného příkazu.
 ```
 $ eetcli.php -h
 eetcli [--options]
+Opensource klient pro etrzby.cz licencovany pod GPL3
+Vice informaci na http://github.com/limosek/eetcli/
+
 Seznam dostupnych maker na vystupu v poli format:
 Poznamka: format muze zacinat znakem '@' coz znamena, ze bude nacten ze souboru, ne z parametru. Napr. @soubor.txt.
  {fik}		 fik kod
@@ -44,14 +47,21 @@ Poznamka: format muze zacinat znakem '@' coz znamena, ze bude nacten ze souboru,
 
 Seznam promennych prostredi, ktere je mozno pouzit:
  TMP		 adresar pro docasne soubory
+ EETCLI_INI	 ini soubor k nacteni (jinak postupne: <HOME>/eetcli.ini,<HOME>/eetcli.ini,<HOME>/.eetclirc,/etc/eetcli.ini,eetcli.ini.dist
  EETCLI_DEBUG	 debug level (0-4)
 
 Mody pouziti:
 -N file.eet		 Vytvor EET soubor z parametru a nikam nezasilej. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}
+
 -C file.eet		 Vytvor EET soubor z parametru a zaroven zasli na etrzby. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}
+
 -S file.eet		 Nacti EET soubor a pokud jeste nebyl zaslan, posli na etrzby. Nasledne uloz pod stejnym jmenem. V pripade, ze uz byl dany eet soubor zaslan drive, vrati se chyba.
+
 -P file.eet		 Nacti EET soubor, otestuj jeho stav a pouze vypis informace podle format. Pokud nesedi kontrolni soucty, vrat chybu.
+
 -T file.eet		 Nacti EET soubor, otestuj jeho stav a pouze vrat chybove hlaseni a navratovy kod podle stavu souboru.
+
+nebo vubec nepouzit EET soubor a pouze odeslat trzbu (--dic, --trzba, --uuid, ...)
 
 Navratove kody:
 1	 Docasna technicka chyba zpracovani - odeslete prosim datovou zpravu pozdeji
@@ -183,7 +193,7 @@ Instalace na debian a podobných systémech:
 ```
 sudo apt-get update
 sudo apt-get install php-cli php5-curl
-wget https://raw.githubusercontent.com/limosek/eetcli/0.2/bin/eetcli
+wget https://raw.githubusercontent.com/limosek/eetcli/0.3/bin/eetcli
 chmod +x eetcli
 ./eetcli -h
 ```
