@@ -25,6 +25,7 @@ use Eetcli\EETFile;
 use Ondrejnov\EET\Dispatcher;
 use Ondrejnov\EET\Receipt;
 use Ondrejnov\EET\Utils\UUID;
+
 /**
  * Description of Util
  *
@@ -115,12 +116,12 @@ class Util {
         if (!$overovaci) {
             $codes = $d->getCheckCodes($r);
             if (array_key_exists("_", $codes['bkp'])) {
-                $bkp = bin2hex($codes['bkp']['_']);
+                $bkp = $codes['bkp']['_'];
             } else {
                 $bkp = null;
             }
             if (array_key_exists("_", $codes['pkp'])) {
-                $pkp = bin2hex($codes['pkp']['_']);
+                $pkp = base64_encode($codes['pkp']['_']);
             } else {
                 $pkp = null;
             }
