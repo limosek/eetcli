@@ -38,6 +38,11 @@ class EETFile {
     const MODE_W = 2;   // Write only (create)
     const MODE_RW = 3;  // RW
     const MODE_D = 4;   // Dry (create object only)
+    
+    const STATUS_NEW = 0;   // Nova uctenka
+    const STATUS_SENT = 1;  // Uspesne odeslana uctenka
+    const STATUS_ERR = 2;   // Neuspesne odeslana uctenka
+    const STATUS_OVEROVACI = 3;   // Zaslana pouze jako overovaci rezim (bez fiku)
 
     /*
      * Typy polozek k odeslani
@@ -114,13 +119,6 @@ class EETFile {
         switch ($mode) {
             case self::MODE_R:
                 self::load();
-                if (array_key_exists("fik", $this->items)) {
-                    $this->status = 2;
-                } elseif (array_key_exists("pkp", $this->items)) {
-                    $this->status = 1;
-                } else {
-                    $this->status = 0;
-                }
                 break;
             case self::MODE_W:
                 if (file_exists($this->filename)) {
@@ -181,10 +179,10 @@ class EETFile {
             );
             foreach ($this->ITEMS as $key => $options) {
                 if ($options & self::I_REQUIRED) {
-                    self::puts($f, $key . "=" . $this->items[$key] . PHP_EOL);
+                    self::puts($f, $key . '="' . $this->items[$key] . '"' . PHP_EOL);
                 } elseif ($options & self::I_OPTIONAL) {
                     if (array_key_exists($key, $this->items)) {
-                        self::puts($f, $key . "=" . $this->items[$key] . PHP_EOL);
+                        self::puts($f, $key . '="' . $this->items[$key] . '"' . PHP_EOL);
                     }
                 }
             }

@@ -114,6 +114,8 @@ Config::setUsage("eetcli [--options]" . PHP_EOL
         . "25\t Uctenka je nova (vysledek testu)" . PHP_EOL
         . "26\t Uctenka jiz byla zaslana (vysledek testu)" . PHP_EOL
         . "27\t Kontrolni soucty v EET souboru nesedi" . PHP_EOL
+        . "29\t EET uctenka neodeslana kvuli chybe" . PHP_EOL
+        . "30\t EET soubor odeslan v overovacim rezimu" . PHP_EOL
         . PHP_EOL);
 
 Config::addOpt(null, "key", Config::C_REQUIRED, "Certificate private key (pem format)", __DIR__ . "/keys/EET_CA1_Playground-CZ1212121218.pem");
@@ -167,7 +169,7 @@ if (Config::getOpt("send-eet")) {
     Console::debug("Posilam EET soubor na etrzby: " . Config::getOpt("send-eet") . PHP_EOL);
     $dispatcher = Util::initDispatcher($eet->playground, $eet->overovaci);
     $r = $eet->toReceipt($dispatcher);
-    if ($eet->status != 2) {
+    if ($eet->status != EETFile::STATUS_SENT) {
         try {
             $fik = $dispatcher->send($r, $eet->overovaci);
             $codes = Util::getCheckCodes($dispatcher, $r, $eet->playground, $eet->overovaci);
@@ -178,6 +180,7 @@ if (Config::getOpt("send-eet")) {
             $r->bkp = $bkp;
             $r->pkp = $pkp;
             $eet->fromReceipt($r);
+            $eet->setStatus(EETFile::STATUS_SENT);
             $eet->save();
             Console::out(Util::expandMacros(Config::getOpt("format"), $r));
         } catch (Exception $e) {
@@ -188,7 +191,7 @@ if (Config::getOpt("send-eet")) {
             $r->bkp = $bkp;
             $r->pkp = $pkp;
             $eet->fromReceipt($r);
-            $eet->setStatus(1);
+            $eet->setStatus(EETFile::STATUS_ERR);
             $eet->setErrorCode($e->getCode());
             $eet->setError($e->getMessage());
             $eet->save();
@@ -262,17 +265,21 @@ if (Config::getOpt("send-eet")) {
         Console::error($e->getCode(), $e->getMessage() . "\n");
     }
     switch ($eet->status) {
-        case 0:
+        case EETFile::STATUS_NEW:
             Console::out("Nova\n");
             $status = Util::E_NEW;
             break;
-        case 1:
-            Console::out("Neodeslana\n");
+        case EETFile::STATUS_SENT:
+            Console::out("Odeslana\n");
             $status = Util::E_ALREADYSENT;
             break;
-        case 2:
-            Console::out("Odeslana\n");
-            $status = Util::E_SENT;
+        case EETFile::STATUS_ERR:
+            Console::out("Neodeslana (chyba)\n");
+            $status = Util::E_SENTERR;
+            break;
+        case EETFile::STATUS_OVEROVACI:
+            Console::out("Odeslana pouze v overovacim rezimu\n");
+            $status = Util::E_SENTOVEROVACI;
             break;
     }
     if ($status == 2) {
@@ -306,7 +313,7 @@ if (Config::getOpt("send-eet")) {
     try {
         $eet = New EETFile($file, EETFile::MODE_W, Config::getOpt("neprodukcni"), Config::getOpt("overovaci"));
         $eet->fromReceipt($r);
-        $eet->setStatus(0);
+        $eet->setStatus(EETFile::STATUS_NEW);
     } catch (Exception $e) {
         Console::error(Util::eetCodeToError($e->getCode()), $e->getMessage() . PHP_EOL);
     }
@@ -363,7 +370,7 @@ if (Config::getOpt("send-eet")) {
             $r->bkp = $bkp;
             $r->pkp = $pkp;
             $eet->fromReceipt($r);
-            $eet->setStatus(1);
+            $eet->setStatus(EETFile::STATUS_ERR);
             $eet->setErrorCode($e->getCode());
             $eet->setError($e->getMessage());
             $eet->save();
@@ -380,11 +387,11 @@ if (Config::getOpt("send-eet")) {
     if ($file) {
         $eet->fromReceipt($r);
         if (Config::getOpt("overovaci")) {
-            $eet->setStatus(1);
+            $eet->setStatus(EETFile::STATUS_OVEROVACI);
             $eet->setErrorCode(0);
             $eet->setError("Overovaci");
         } else {
-            $eet->setStatus(2);
+            $eet->setStatus(EETFile::STATUS_SENT);
         }
         $eet->save();
     }

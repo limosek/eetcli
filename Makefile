@@ -29,7 +29,7 @@ key-info:
 	@echo "key: $(KEY)"
 	@echo "crt: $(CRT)"
 
-dist-clean: clean
+distclean: clean
 	rm -rf vendor 
 
 prepare: vendor/ondrejnov/eet/README.md
@@ -62,7 +62,7 @@ eetcli.phar:
 info: eetcli.phar
 	phar list -f eetcli.phar -i '\.(ini|p12|pem|crt|dist)$$'
 
-distphar: bin/eetcli.phar
+distphar: key crt bin/eetcli.phar
 bin/eetcli.phar:
 	mkdir -p bin
 	php -dphar.readonly=0 vendor/bin/box build -c box-dist.json

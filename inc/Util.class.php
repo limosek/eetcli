@@ -40,6 +40,8 @@ class Util {
     const E_LOCK = 24;
     const E_NEW = 25;
     const E_SENT = 26;
+    const E_SENTERR = 29;
+    const E_SENTOVEROVACI = 30;
     const E_CHECKCODES = 27;
 
     private static $tmpfiles;

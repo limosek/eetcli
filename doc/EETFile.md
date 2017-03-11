@@ -19,6 +19,15 @@ EET soubor je v podstatě ini soubor. Dá se editovat jakýmkoliv textovým edit
 u nových EET souborů, které mohou být vytvářeny externím programem, například účetním. EET soubory obsahující další údaje
 jsou sice stále textové soubory, ale jejich modifikací se mohou stát neplatnými díky porušení bezpečnostních kodů.
 
+### Status
+Status účtenky:
+
+ * 0 - nová účtenka
+ * 1 - odeslaná
+ * 2 - neodeslaná kvůli chybě
+ * 3 - odeslaná pouze v ověřovacím režimu bez FIK
+
+
 ### Příklad EET souboru ve stavu připraveném k odeslání (vytvořený např. externím programem)
 ```
 [eetfile]
@@ -45,7 +54,7 @@ celk_trzba=10
 ```
 [eetfile]
 version=1.0
-status=1
+status=2
 lasterror=4
 lasterrorcode=Neplatny podpis SOAP zpravy
 prostredi=produkcni
@@ -69,8 +78,8 @@ bkp=31383964343362382d38393936633730332d31663832316662612d39323939643061662d6536
 [eetfile]
 version=1.0
 status=1
-lasterror=4
-lasterrorcode=Neplatny podpis SOAP zpravy
+lasterror=
+lasterrorcode=
 prostredi=produkcni
 
 [eet]
