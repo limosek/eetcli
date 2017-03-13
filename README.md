@@ -33,76 +33,84 @@ Použil jsem komponenty třetích stran, které jsou rovněž šířeny pod otev
 # Použití
 Malý návod k použití je i součástí samotného příkazu.
 ```
-$ eetcli.php -h
-eetcli [--options]
+$ eetcli [--options]
 Opensource klient pro etrzby.cz licencovany pod GPL3
 Vice informaci na http://github.com/limosek/eetcli/
 
 Seznam dostupnych maker na vystupu v poli format:
 Poznamka: format muze zacinat znakem '@' coz znamena, ze bude nacten ze souboru, ne z parametru. Napr. @soubor.txt.
- {fik}		 fik kod
- {bkp}		 bkp kod
- {pkp}		 pkp kod
+ {fik}           fik kod
+ {bkp}           bkp kod
+ {pkp}           pkp kod
    a dalsi: {uuid_zpravy},{dat_odesl},{prvni_zaslani},{overeni},{dic_popl},{dic_poverujiciho},{id_provoz},{id_pokl},{porad_cis},{dat_trzby},{celk_trzba},{zakl_nepodl_dph},{zakl_dan1},{dan1},{zakl_dan2},{dan2},{zakl_dan3},{dan3},{cest_sluz},{pouzit_zboz1},{pouzit_zboz2},{pouzit_zboz3},{urceno_cerp_zuct},{cerp_zuct},{pkp},{bkp},{fik}
 
 Seznam promennych prostredi, ktere je mozno pouzit:
- TMP		 adresar pro docasne soubory
- EETCLI_INI	 ini soubor k nacteni (jinak postupne: <HOME>/eetcli.ini,<HOME>/eetcli.ini,<HOME>/.eetclirc,/etc/eetcli.ini,eetcli.ini.dist
- EETCLI_DEBUG	 debug level (0-4)
+ TMP             adresar pro docasne soubory
+ EETCLI_INI      ini soubor k nacteni (jinak postupne: /mnt/c/Users/LukasMacura/eetcli/../eetcli.ini,/home/limo/eetcli.ini,/home/limo/.eetclirc,/etc/eetcli.ini,/mnt/c/Users/LukasMacura/eetcli/../eetcli.ini.dist
+ EETCLI_DEBUG    debug level (0-4)
 
 Mody pouziti:
--N file.eet		 Vytvor EET soubor z parametru a nikam nezasilej. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}
+-N file.eet              Vytvor EET soubor z parametru a nikam nezasilej. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}
 
--C file.eet		 Vytvor EET soubor z parametru a zaroven zasli na etrzby. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}
+-C file.eet              Vytvor EET soubor z parametru a zaroven zasli na etrzby. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}
 
--S file.eet		 Nacti EET soubor a pokud jeste nebyl zaslan, posli na etrzby. Nasledne uloz pod stejnym jmenem. V pripade, ze uz byl dany eet soubor zaslan drive, vrati se chyba.
+-S file.eet              Nacti EET soubor a pokud jeste nebyl zaslan, posli na etrzby. Nasledne uloz pod stejnym jmenem. V pripade, ze uz byl dany eet soubor zaslan drive, vrati se chyba.
 
--P file.eet		 Nacti EET soubor, otestuj jeho stav a pouze vypis informace podle format. Pokud nesedi kontrolni soucty, vrat chybu.
+-P file.eet              Nacti EET soubor, otestuj jeho stav a pouze vypis informace podle format. Pokud nesedi kontrolni soucty, vrat chybu.
 
--T file.eet		 Nacti EET soubor, otestuj jeho stav a pouze vrat chybove hlaseni a navratovy kod podle stavu souboru.
+-T file.eet              Nacti EET soubor, otestuj jeho stav a pouze vrat chybove hlaseni a navratovy kod podle stavu souboru.
 
 nebo vubec nepouzit EET soubor a pouze odeslat trzbu (--dic, --trzba, --uuid, ...)
 
 Navratove kody:
-1	 Docasna technicka chyba zpracovani - odeslete prosim datovou zpravu pozdeji
-2	 Kodovani XML neni platne
-3	 XML zprava nevyhovela kontrole XML schematu
-4	 Neplatny podpis SOAP zpravy
-5	 Neplatny kontrolni bezpecnostni kod poplatnika (BKP)
-6	 DIC poplatnika ma chybnou strukturu
-7	 Datova zprava je prilis velka
-8	 Datova zprava nebyla zpracovana kvuli technicke chybe nebo chybe dat
-20	 Chyba pri praci se souborem
-21	 Uctenka jiz byla zaslana
-22	 Chyba v parametrech
-23	 Chyba ve formatu souboru
-24	 Chyba pri uzamykani souboru
-25	 Uctenka je nova (vysledek testu)
-26	 Uctenka jiz byla zaslana (vysledek testu)
-27	 Kontrolni soucty v EET souboru nesedi
+1        Docasna technicka chyba zpracovani - odeslete prosim datovou zpravu pozdeji
+2        Kodovani XML neni platne
+3        XML zprava nevyhovela kontrole XML schematu
+4        Neplatny podpis SOAP zpravy
+5        Neplatny kontrolni bezpecnostni kod poplatnika (BKP)
+6        DIC poplatnika ma chybnou strukturu
+7        Datova zprava je prilis velka
+8        Datova zprava nebyla zpracovana kvuli technicke chybe nebo chybe dat
+20       Chyba pri praci se souborem
+21       Uctenka jiz byla zaslana
+22       Chyba v parametrech
+23       Chyba ve formatu souboru
+24       Chyba pri uzamykani souboru
+25       Uctenka je nova (vysledek testu)
+26       Uctenka jiz byla zaslana (vysledek testu)
+27       Kontrolni soucty v EET souboru nesedi
+29       EET uctenka neodeslana kvuli chybe
+30       EET soubor odeslan v overovacim rezimu
 
 Options:
-  -d, --debug <arg>       
-  -e, --errors <arg>      
-  -o, --output <arg>      
-  -h, --help [<arg>]      
-  --key <arg>             
-  --crt <arg>             
-  -n, --overovaci [<arg>] 
-  -p, --neprodukcni [<arg>] 
-  --uuid <arg>            
-  --dic <arg>             
-  --provozovna <arg>      
-  --pokladna <arg>        
-  --pc <arg>              
-  --cas <arg>             
-  --trzba <arg>           
-  --format <arg>          
-  -N, --create-eet [<arg>] 
-  -C, --create-send-eet [<arg>] 
-  -S, --send-eet [<arg>]  
-  -P, --print-eet [<arg>] 
-  -T, --test-eet [<arg>]  
+  -d, --debug <arg>
+  -e, --errors <arg>
+  -o, --output <arg>
+  -h, --help [<arg>]
+  --key <arg>
+  --crt <arg>
+  -n, --overovaci [<arg>]
+  -p, --neprodukcni [<arg>]
+  --uuid <arg>
+  --dic <arg>
+  --provozovna <arg>
+  --pokladna <arg>
+  --pc <arg>
+  --cas <arg>
+  --trzba <arg>
+  --zakl_nepodl_dph <arg>
+  --zakl_dan1 <arg>
+  --dan1 <arg>
+  --zakl_dan2 <arg>
+  --dan2 <arg>
+  --zakl_dan3 <arg>
+  --dan3 <arg>
+  --format <arg>
+  -N, --create-eet [<arg>]
+  -C, --create-send-eet [<arg>]
+  -S, --send-eet [<arg>]
+  -P, --print-eet [<arg>]
+  -T, --test-eet [<arg>]
 Pouzijte eetcli -h -d 4 pro vice informaci.
 ```
 
@@ -193,7 +201,7 @@ Instalace na debian a podobných systémech:
 ```
 sudo apt-get update
 sudo apt-get install php-cli php5-curl
-wget https://raw.githubusercontent.com/limosek/eetcli/0.4/bin/eetcli
+wget https://raw.githubusercontent.com/limosek/eetcli/0.5/bin/eetcli
 chmod +x eetcli
 ./eetcli -h
 ```

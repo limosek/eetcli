@@ -15,7 +15,11 @@ Doklad cislo: {porad_cis}
 Datum: {dat_trzby}
 Provozovna: {id_provoz}
 Pokladna: {id_pokl}
-Rezim: Bezny
+Castka: {celk_trzba} Kc
+DPH: {dan1} Kc
+
+Rezim: {Rezim}
+Prostredi: {Prostredi}
 BKP: {bkp}
 FIK: {fik}
 

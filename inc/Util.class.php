@@ -137,16 +137,30 @@ class Util {
         ));
     }
 
-    function expandMacros($str, $request) {
+    function expandMacros($str, $request, $playground, $overovaci) {
+        if ($playground) {
+            $ptext = "Neprodukcni";
+        } else {
+            $ptext = "Produkcni";
+        }
+        if ($overovaci) {
+            $otext = "Overovaci";
+        } else {
+            $otext = "Ostry";
+        }
         $search = Array(
             "fik" => "/{fik}/",
             "pkp" => "/{pkp}/",
-            "bkp" => "/{bkp}/"
+            "bkp" => "/{bkp}/",
+            "Rezim" => "/{Rezim}/",
+            "Prostredi" => "/{Prostredi}/"
         );
         $replace = Array(
             "fik" => "",
             "pkp" => "",
-            "bkp" => ""
+            "bkp" => "",
+            "Rezim" => "$otext",
+            "Prostredi" => "$ptext"
         );
         foreach ($request as $k => $v) {
             $key = "/{" . $k . "}/";
@@ -163,23 +177,23 @@ class Util {
                         $search, $replace, $str));
         return($out);
     }
-    
+
     public function getMacros() {
         $macros = Array();
-        $eet=New EETFile(false);
+        $eet = New EETFile(false);
         foreach ($eet->ITEMS as $key => $option) {
-            $macros[] = "{".$key."}";
+            $macros[] = "{" . $key . "}";
         }
         return($macros);
     }
-    
+
     public function eetCodeToError($code) {
-        if ($code==-1) {
-            $code=1;
+        if ($code == -1) {
+            $code = 1;
         }
         return($code);
     }
-    
+
     public function receiptFromParams() {
         $r = new Receipt();
         if (Config::getOpt("uuid")) {
@@ -206,6 +220,27 @@ class Util {
         }
         $r->dat_trzby = New \DateTime(Config::getOpt("cas"));
         $r->celk_trzba = Config::getOpt("trzba");
+        if (Config::getOpt("zakl_nepodl_dph")) {
+            $r->zakl_nepodl_dph = Config::getOpt("zakl_nepodl_dph");
+        }
+        if (Config::getOpt("zakl_dan1")) {
+            $r->zakl_dan1 = Config::getOpt("zakl_dan1");
+        }
+        if (Config::getOpt("dan1")) {
+            $r->dan1 = Config::getOpt("dan1");
+        }
+        if (Config::getOpt("zakl_dan2")) {
+            $r->zakl_dan2 = Config::getOpt("zakl_dan2");
+        }
+        if (Config::getOpt("dan2")) {
+            $r->dan2 = Config::getOpt("dan2");
+        }
+        if (Config::getOpt("zakl_dan3")) {
+            $r->zakl_dan1 = Config::getOpt("zakl_dan3");
+        }
+        if (Config::getOpt("dan3")) {
+            $r->dan1 = Config::getOpt("dan3");
+        }
         return($r);
     }
 

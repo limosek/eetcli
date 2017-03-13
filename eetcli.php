@@ -130,6 +130,13 @@ Config::addOpt(null, "pc", Config::C_REQUIRED, "Poradove cislo", 1);
 $dte = New \DateTime(false, New \DateTimeZone("Europe/Prague"));
 Config::addOpt(null, "cas", Config::C_REQUIRED, "Cas a datum (yyyy-mm-dd hh:mm::ss)", $dte->format(DateTime::RFC3339));
 Config::addOpt(null, "trzba", Config::C_REQUIRED, "Trzba v Kc");
+Config::addOpt(null, "zakl_nepodl_dph", Config::C_REQUIRED, "Celkova castka plneni osvobozenych od DPH");
+Config::addOpt(null, "zakl_dan1", Config::C_REQUIRED, "Celkovy zaklad dane se zakladni sazbou DPH");
+Config::addOpt(null, "dan1", Config::C_REQUIRED, "Celkova DPH se zakladni sazbou");
+Config::addOpt(null, "zakl_dan2", Config::C_REQUIRED, "Celkovy zaklad dane s prvni snizenou sazbou DPH");
+Config::addOpt(null, "dan2", Config::C_REQUIRED, "Celkova DPH s prvni snizenou sazbou");
+Config::addOpt(null, "zakl_dan3", Config::C_REQUIRED, "Celkovy zaklad dane s druhou snizenou sazbou DPH");
+Config::addOpt(null, "dan3", Config::C_REQUIRED, "Celkova DPH s druhou snizenou sazbou");
 Config::addOpt(null, "format", Config::C_REQUIRED, "Vystupni format. Muze byt napr. {fik},{bkp},{pkp} nebo jine makro. Viz seznam maker.", "{fik}" . PHP_EOL);
 Config::addOpt("N", "create-eet", Config::C_OPTIONAL, "Vytvor EET soubor z parametru a nikam nezasilej. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}", false);
 Config::addOpt("C", "create-send-eet", Config::C_OPTIONAL, "Vytvor EET soubor z parametru a zaroven zasli na etrzby. Je mozno pouzit i makra v nazvu souboru, napr. {uuid_zpravy}", false);
@@ -182,7 +189,7 @@ if (Config::getOpt("send-eet")) {
             $eet->fromReceipt($r);
             $eet->setStatus(EETFile::STATUS_SENT);
             $eet->save();
-            Console::out(Util::expandMacros(Config::getOpt("format"), $r));
+            Console::out(Util::expandMacros(Config::getOpt("format"), $r, $eet->playground, $eet->overovaci));
         } catch (Exception $e) {
             $codes = Util::getCheckCodes($dispatcher, $r, $eet->playground, $eet->overovaci);
             $bkp = $codes["bkp"];
@@ -234,7 +241,7 @@ if (Config::getOpt("send-eet")) {
     $r->fik = $eet->items["fik"];
     $r->bkp = $eet->items["bkp"];
     $r->pkp = $eet->items["pkp"];
-    Console::out(Util::expandMacros(Config::getOpt("format"), $r));
+    Console::out(Util::expandMacros(Config::getOpt("format"), $r, $eet->playground, $eet->overovaci));
     /*
      * 
      * Rezim testovani uctenky
@@ -308,7 +315,7 @@ if (Config::getOpt("send-eet")) {
     ));
     $dispatcher = Util::initDispatcher(Config::getOpt("neprodukcni"), Config::getOpt("overovaci"));
     $r = Util::receiptFromParams();
-    $file = Util::expandMacros(Config::getOpt("create-eet"), $r);
+    $file = Util::expandMacros(Config::getOpt("create-eet"), $r, Config::getOpt("neprodukcni"), Config::getOpt("overovaci"));
     Console::debug("Vytvarim EET soubor: $file" . PHP_EOL);
     try {
         $eet = New EETFile($file, EETFile::MODE_W, Config::getOpt("neprodukcni"), Config::getOpt("overovaci"));
@@ -317,7 +324,7 @@ if (Config::getOpt("send-eet")) {
     } catch (Exception $e) {
         Console::error(Util::eetCodeToError($e->getCode()), $e->getMessage() . PHP_EOL);
     }
-    Console::out(Util::expandMacros(Config::getOpt("format"), $r));
+    Console::out(Util::expandMacros(Config::getOpt("format"), $r, Config::getOpt("neprodukcni"), Config::getOpt("overovaci")));
     $eet->save();
     /*
      * 
@@ -348,7 +355,7 @@ if (Config::getOpt("send-eet")) {
     }
     $dispatcher = Util::initDispatcher(Config::getOpt("neprodukcni"), Config::getOpt("overovaci"));
     $r = Util::receiptFromParams();
-    $file = Util::expandMacros(Config::getOpt("create-send-eet"), $r);
+    $file = Util::expandMacros(Config::getOpt("create-send-eet"), $r, Config::getOpt("neprodukcni"), Config::getOpt("overovaci"));
     try {
         if ($file) {
             $eet = New EETFile($file, EETFile::MODE_W, Config::getOpt("neprodukcni"), Config::getOpt("overovaci"));
@@ -395,5 +402,5 @@ if (Config::getOpt("send-eet")) {
         }
         $eet->save();
     }
-    Console::out(Util::expandMacros(Config::getOpt("format"), $r));
+    Console::out(Util::expandMacros(Config::getOpt("format"), $r, Config::getOpt("neprodukcni"), Config::getOpt("overovaci")));
 }
