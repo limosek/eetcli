@@ -108,8 +108,10 @@ class Util {
 
         try {
             $dispatcher = new Dispatcher($wsdl, Config::getOpt("key"), Config::getOpt("crt"));
-        } catch (Exception $e) {
-            Console::error($e->getCode(), $e->getMessage());
+            $dispatcher->getSoapClient()->setTimeout(Config::getOpt("timeout"));
+            $dispatcher->getSoapClient()->setConnectTimeout(Config::getOpt("timeout"));
+        } catch (\Exception $e) {
+            Console::error($e->getCode(), $e->getMessage()."\n");
         }
         return($dispatcher);
     }

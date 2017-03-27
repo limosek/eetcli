@@ -200,7 +200,7 @@ Instalace na debian a podobných systémech:
 
 ```
 sudo apt-get update
-sudo apt-get install php-cli php5-curl
+sudo apt-get install php-cli php-curl php-soap php-dom
 wget https://raw.githubusercontent.com/limosek/eetcli/0.5/bin/eetcli
 chmod +x eetcli
 ./eetcli -h

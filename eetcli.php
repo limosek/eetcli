@@ -143,6 +143,7 @@ Config::addOpt("C", "create-send-eet", Config::C_OPTIONAL, "Vytvor EET soubor z 
 Config::addOpt("S", "send-eet", Config::C_OPTIONAL, "Nacti EET soubor a pokud jeste nebyl zaslan, posli na etrzby. Nasledne uloz pod stejnym jmenem.", false);
 Config::addOpt("P", "print-eet", Config::C_OPTIONAL, "Nacti EET soubor, otestuj jeho stav a pouze vypis informace podle format.", false);
 Config::addOpt("T", "test-eet", Config::C_OPTIONAL, "Otestuj EET soubor a vrat stav.", false);
+Config::addOpt(null, "timeout", Config::C_OPTIONAL, "Timeout v mS pro zpracovani dotazu", 2500);
 
 Config::read(Array("global", "firma", "cert", "eet"));
 Util::init();
@@ -178,6 +179,13 @@ if (Config::getOpt("send-eet")) {
     $r = $eet->toReceipt($dispatcher);
     if ($eet->status != EETFile::STATUS_SENT) {
         try {
+            // UUID musi byt jine, pokud se zprava posila znovu
+            if (Config::getOpt("uuid")) {
+                $uuid = Config::getOpt("uuid");
+            } else {
+                $uuid = UUID::v4();
+            }
+            $r->uuid_zpravy = $uuid;
             $fik = $dispatcher->send($r, $eet->overovaci);
             $codes = Util::getCheckCodes($dispatcher, $r, $eet->playground, $eet->overovaci);
             $bkp = $codes["bkp"];
