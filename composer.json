@@ -1,9 +1,12 @@
 {
+    "name": "limosek/eetcli",
+    "description": "Commandline client for EET (etrzby.cz)",
+    "license": "GPL-3.0-or-later",
     "require": {
         "ondrejnov/eet": "^0.3.0",
-        "ulrichsg/getopt-php": "^2.3"
+        "ulrichsg/getopt-php": "^3.3"
     },
     "require-dev": {
-        "kherge/box": "~2.0"
+        "kherge/box": "~2.5"
     }
 }
